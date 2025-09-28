@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Predict Customer Churn</h2>
+<p style="text-align:center;">Input customer demographics to predict churn probability</p>
+<div style="display: flex; gap: 20px;">
+  <div style="flex: 1;">
+    <div>
+      <p><label for="model">Choose Model:</label></p>
+      <select name="model" id="model">
+        <option value="random_forest">Random Forest</option>
+        <option value="logistic">Logistic Regression</option>
+      </select><br><br>
+    </div>
+
+    <hr>
+
+    <!-- Base user form (defines one user's demographics) -->
+    <form method="POST" action="{{ url_for('churn_bp.add_user') }}">
+        <label for="gender">Gender:</label>
+        <select id="gender" name="gender" required>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select><br><br>
+        
+        <label for="SeniorCitizen">Senior Citizen:</label>
+        <select id="SeniorCitizen" name="SeniorCitizen" required>
+          <option value="1">Yes</option>
+          <option value="0">No</option>
+        </select><br><br>
+
+        <label for="Partner">Partner:</label>
+        <select id="Partner" name="Partner" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="Dependents">Dependents:</label>
+        <select id="Dependents" name="Dependents" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="PhoneService">Phone Service:</label>
+        <select id="PhoneService" name="PhoneService" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="MultipleLines">Multiple Lines:</label>
+        <select id="MultipleLines" name="MultipleLines" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="InternetService">Internet Service:</label>
+        <select id="InternetService" name="InternetService" required>
+          <option value="DSL">DSL</option>
+          <option value="Fiber optic">Fiber optic</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="OnlineSecurity">Online Security:</label>
+        <select id="OnlineSecurity" name="OnlineSecurity" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="OnlineBackup">Online Backup:</label>
+        <select id="OnlineBackup" name="OnlineBackup" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="DeviceProtection">Device Protection:</label>
+        <select id="DeviceProtection" name="DeviceProtection" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="TechSupport">Tech Support:</label>
+        <select id="TechSupport" name="TechSupport" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="StreamingTV">Streaming TV:</label>
+        <select id="StreamingTV" name="StreamingTV" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="StreamingMovies">Streaming Movies:</label>
+        <select id="StreamingMovies" name="StreamingMovies" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="Contract">Contract:</label>
+        <select id="Contract" name="Contract" required>
+          <option value="Month-to-month">Month-to-month</option>
+          <option value="One year">One year</option>
+          <option value="Two year">Two year</option>
+        </select><br><br>
+
+        <label for="PaperlessBilling">Paperless Billing:</label>
+        <select id="PaperlessBilling" name="PaperlessBilling" required>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select><br><br>
+
+        <label for="PaymentMethod">Payment Method:</label>
+        <select id="PaymentMethod" name="PaymentMethod" required>
+          <option value="Electronic check">Electronic check</option>
+          <option value="Mailed check">Mailed check</option>
+          <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+          <option value="Credit card (automatic)">Credit card (automatic)</option>
+        </select><br><br>
+
+        <label for="Tenure">Tenure (months):</label>
+        <label for="Tenure">(between 1 and 72):</label>
+        <input id="tenure" type="number" step="1" name="tenure" min="1" max="72" required><br><br>
+
+        <label for="MonthlyCharges">Monthly Charges:</label>
+        <label for="MonthlyCharges">(between $18 and $120):</label>
+        <input id="MonthlyCharges" type="number" step="0.01" name="MonthlyCharges" min="18" max="120" required><br><br>
+
+        <label for="TotalCharges">Total Charges (readonly):</label>
+        <input id="TotalCharges" type="number" step="0.01" name="TotalCharges" readonly><br><br>
+      <hr>
+      <!-- Show current users count -->
+      <h3>Current Users ({{ users|length }})</h3>
+        <!-- Add buttons to quickly add multiple users -->
+        <button type="submit" name="count" value="1">+1</button>
+        <button type="submit" name="count" value="5">+5</button>
+        <button type="submit" name="count" value="10">+10</button>
+        <button type="submit" name="count" value="100">+100</button>
+    </form>
+    <br>
+    <!-- Predict All and Clear Users -->
+    {% if users %}
+      <form action="{{ url_for('churn_bp.predict_all') }}" method="get" style="display:inline;">
+        <button type="submit">Predict All</button>
+      </form>
+      <form action="{{ url_for('churn_bp.clear_users') }}" method="post" style="display:inline;">
+        <button type="submit">Clear Users</button>
+      </form>
+    {% endif %}
+
+  </div>
+  <div style="flex: 1;">
+    
+  <!-- Results Section -->
+{% if results %}
+<div style="display: flex; gap: 20px;">
+  <!-- Form is on the left, chart on the right -->
+  <div style="flex: 2;">
+    <h3>Batch Prediction Results ({{ model_name }})</h3>
+    <canvas id="batchChart"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const results = {{ results|tojson }};
+      const probs = results.map(r => r.probability);
+
+      // Prepare 5 bins: 0–20%, 20–40%, 40–60%, 60–80%, 80–100%
+      let bins = [0,0,0,0,0];
+      probs.forEach(p => {
+        if (p < 0.2) bins[0]++;
+        else if (p < 0.4) bins[1]++;
+        else if (p < 0.6) bins[2]++;
+        else if (p < 0.8) bins[3]++;
+        else bins[4]++;
+      });
+
+      // Create bar chart
+      const ctx = document.getElementById('batchChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%"],
+          datasets: [{
+            label: 'Users per churn probability range',
+            data: bins,
+            backgroundColor: [
+              'rgba(75, 192, 75, 0.7)',    // green = safe
+              'rgba(255, 206, 86, 0.7)',   // yellow = mild risk
+              'rgba(255, 159, 64, 0.7)',   // orange = medium risk
+              'rgba(255, 99, 132, 0.7)',   // red = high risk
+              'rgba(153, 0, 0, 0.7)'       // dark red = very high risk
+            ]
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    </script>
+  </div>
+</div>
+{% endif %}
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          const internetService = document.getElementById("InternetService");
+          const internetDependents = [
+              "OnlineSecurity", "OnlineBackup", "DeviceProtection",
+              "TechSupport", "StreamingTV", "StreamingMovies"
+          ];
+          const phoneService = document.getElementById("PhoneService");
+          const multipleLines = document.getElementById("MultipleLines");
+          const tenure = document.getElementById("tenure");
+          const monthlyCharges = document.getElementById("MonthlyCharges");
+          const totalCharges = document.getElementById("TotalCharges");
+
+          // --- Rule 1: No internet → disable dependents ---
+          function handleInternetService() {
+              const val = internetService.value.toLowerCase();
+              internetDependents.forEach(id => {
+                  const el = document.getElementById(id);
+                  if (!el) return;
+
+                  if (val.includes("no")) {
+                      // ensure option exists
+                      if (![...el.options].some(o => o.value === "No internet service")) {
+                          let opt = document.createElement("option");
+                          opt.value = "No internet service";
+                          opt.text = "No internet service";
+                          el.add(opt);
+                      }
+                      el.value = "No internet service";
+                      el.disabled = true;
+                  } else {
+                      // remove "No internet service" option
+                      [...el.options].forEach((o, i) => {
+                          if (o.value === "No internet service") el.remove(i);
+                      });
+                      el.disabled = false;
+                  }
+              });
+          }
+          internetService.addEventListener("change", handleInternetService);
+
+          // --- Rule 2: No phone service → multiple lines disabled ---
+          function handlePhoneService() {
+              const val = phoneService.value.toLowerCase();
+              if (val.includes("no")) {
+                  if (![...multipleLines.options].some(o => o.value === "No phone service")) {
+                      let opt = document.createElement("option");
+                      opt.value = "No phone service";
+                      opt.text = "No phone service";
+                      multipleLines.add(opt);
+                  }
+                  multipleLines.value = "No phone service";
+                  multipleLines.disabled = true;
+              } else {
+                  [...multipleLines.options].forEach((o, i) => {
+                      if (o.value === "No phone service") multipleLines.remove(i);
+                  });
+                  multipleLines.disabled = false;
+              }
+          }
+          phoneService.addEventListener("change", handlePhoneService);
+
+          // --- Rule 3: TotalCharges ≈ MonthlyCharges * tenure ---
+          function updateTotalCharges() {
+              const m = parseFloat(monthlyCharges.value) || 0;
+              const t = parseFloat(tenure.value) || 0;
+              totalCharges.value = (m * t).toFixed(2);
+          }
+          tenure.addEventListener("input", updateTotalCharges);
+          monthlyCharges.addEventListener("input", updateTotalCharges);
+
+          // Run once on load
+          handleInternetService();
+          handlePhoneService();
+          updateTotalCharges();
+      });
+      </script>
+{% endblock %}

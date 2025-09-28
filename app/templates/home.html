@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Dashboard</h2>
+<p style="text-align:center;">What the model learned + churn breakdown</p>
+
+<form method="get" action="/">
+  <label for="model">Choose model:</label>
+  <select name="model" id="model" onchange="this.form.submit()">
+    <option value="random_forest" {% if model_name == "random_forest" %}selected{% endif %}>Random Forest</option>
+    <option value="logistic_regression" {% if model_name == "logistic_regression" %}selected{% endif %}>Logistic Regression</option>
+  </select>
+</form>
+
+<div style="display:flex; gap:40px; align-items:flex-start; justify-content:center;">
+    <!-- Left: Feature Importance / Coefficients -->
+    <div style="flex:1; min-width:300px;">
+        <h2>{{ model_name|capitalize }} Insights</h2>
+        {% if insights %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for feat, val in insights %}
+                <tr>
+                    <td>{{ feat }}</td>
+                    <td>{{ "%.4f"|format(val) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No model insights available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Right: Feature breakdown chart -->
+    <div style="width:800px; margin:20px auto;">
+        <div style="text-align:center; margin:20px;">
+            <h2>Churn by Category</h2>
+            <label for="featureSelect"><strong>Select a feature:</strong></label>
+            <select id="featureSelect">
+                {% for feature in charts_data.keys() %}
+                <option value="{{ feature }}">{{ feature }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <canvas id="churnChart"></canvas>
+    </div>
+</div>
+
+<script>
+    const chartsData = {{ charts_data | tojson | safe }};
+    const featureSelect = document.getElementById('featureSelect');
+    const ctx = document.getElementById('churnChart').getContext('2d');
+
+    let initialFeature = featureSelect.value;
+    let chart = new Chart(ctx, {
+        type: chartsData[initialFeature].type,
+        data: {
+            labels: chartsData[initialFeature].labels,
+            datasets: [{
+                label: 'Churn Rate (%)',
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                fill: false,
+                data: chartsData[initialFeature].values
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    featureSelect.addEventListener('change', function() {
+        let selected = this.value;
+        chart.config.type = chartsData[selected].type;
+        chart.data.labels = chartsData[selected].labels;
+        chart.data.datasets[0].data = chartsData[selected].values;
+        chart.update();
+    });
+</script>
+{% endblock %}
