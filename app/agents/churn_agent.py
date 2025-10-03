@@ -6,8 +6,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from scipy.special import expit
 import pandas as pd
 import pickle
+import random
 import os
 
 # 📌 Single source of truth for schema
@@ -19,6 +21,8 @@ CATEGORICAL_FIELDS = [
     "StreamingTV", "StreamingMovies", "Contract",
     "PaperlessBilling", "PaymentMethod"
 ]
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # goes up from app/agents
+CSV_PATH = os.path.join(BASE_DIR, "data", "WA_Fn-UseC_-Telco-Customer-Churn.csv")
 
 def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Cleans and normalizes input data for training and prediction."""
@@ -30,7 +34,7 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     # SeniorCitizen: normalize to 0/1
     if "SeniorCitizen" in df.columns:
-        df["SeniorCitizen"] = df["SeniorCitizen"].replace({"Yes": 1, "No": 0}).astype(int)
+        df["SeniorCitizen"] = df["SeniorCitizen"].replace({"yes": 1, "no": 0}).astype(int)
 
     # Normalize categorical strings
     for c in categorical_fields:
@@ -41,10 +45,9 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     # SeniorCitizen: normalize to 0/1
     if "SeniorCitizen" in df.columns:
-        df["SeniorCitizen"] = df["SeniorCitizen"].replace({"Yes": 1, "No": 0}).astype(int)
+        df["SeniorCitizen"] = df["SeniorCitizen"].replace({"yes": 1, "no": 0}).astype(int)
 
     # Rule 1: No internet → disable dependent services
-    if "InternetService" in df.columns:
         no_internet_mask = df["InternetService"].str.contains("no", na=False)
         for col in ["OnlineSecurity", "OnlineBackup", "DeviceProtection",
                     "TechSupport", "StreamingTV", "StreamingMovies"]:
@@ -60,6 +63,7 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     if {"MonthlyCharges", "tenure", "TotalCharges"}.issubset(df.columns):
         df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
         # Fill blanks with MonthlyCharges * tenure
+    if "InternetService" in df.columns:
         df.loc[df["TotalCharges"].isna(), "TotalCharges"] = (
             df["MonthlyCharges"].astype(float) * df["tenure"].astype(float)
         )
@@ -153,46 +157,25 @@ def _align_df_to_pipeline(model, df: pd.DataFrame) -> pd.DataFrame:
     return df2
 
 def normalize_user_input(raw):
-    """
-    Ensure user input matches the training schema:
-    - numeric fields → float or int
-    - categorical fields → strings
-    - fill missing values safely
-    """
-    customer_data = {}
+    user = {k: str(v).strip() for k, v in raw.items()}
 
-    # numeric fields
-    try:
-        customer_data["TotalCharges"] = float(raw.get("TotalCharges", 0) or 0.0)
-    except ValueError:
-        customer_data["TotalCharges"] = 0.0
+    # --- PhoneService dependency ---
+    if user.get("PhoneService", "").lower() == "no":
+        user["MultipleLines"] = "No phone service"
 
-    try:
-        customer_data["MonthlyCharges"] = float(raw.get("MonthlyCharges", 0) or 0.0)
-    except ValueError:
-        customer_data["MonthlyCharges"] = 0.0
+    # --- InternetService dependency ---
+    if user.get("InternetService", "").lower() == "no":
+        for dep in ["OnlineSecurity","OnlineBackup","DeviceProtection",
+                    "TechSupport","StreamingTV","StreamingMovies"]:
+            user[dep] = "No internet service"
 
-    try:
-        customer_data["tenure"] = int(raw.get("tenure", 0) or 0)
-    except ValueError:
-        customer_data["tenure"] = 0
+    # SeniorCitizen fix
+    if user.get("SeniorCitizen") in ["yes","Yes","1","true"]:
+        user["SeniorCitizen"] = 1
+    else:
+        user["SeniorCitizen"] = 0
 
-    try:
-        customer_data["SeniorCitizen"] = int(raw.get("SeniorCitizen", 0) or 0)
-    except ValueError:
-        customer_data["SeniorCitizen"] = 0
-
-    # categorical fields
-    categorical_fields = CATEGORICAL_FIELDS
-
-    for field in categorical_fields:
-        val = raw.get(field, "")
-        if val is None or str(val).strip() == "":
-            customer_data[field] = "Unknown"   # placeholder category
-        else:
-            customer_data[field] = str(val).strip().lower()
-
-    return customer_data
+    return user
 
 def predict_churn_batch(model, users: list):
     if not users:
@@ -214,17 +197,17 @@ def predict_churn_batch(model, users: list):
     probs = model.predict_proba(df_aligned)[:, 1]
     results = []
     for user, prob in zip(users, probs):
+        print("DEBUG RF user prob:", prob, "row:", user)
         results.append({**user, "churn_probability": round(float(prob), 4)})
 
-    print("DEBUG sanitized user row:", df.iloc[0].to_dict())
-    return results
+    return list(map(float, probs))
 
 def train_and_evaluate(model, data_path="data/WA_Fn-UseC_-Telco-Customer-Churn.csv"):
     # Load raw dataset
     df = pd.read_csv(data_path)
 
     # Separate target
-    y = df["Churn"].replace({"Yes": 1, "No": 0})
+    y = df["Churn"].replace({"yes": 1, "No": 0})
     X = df.drop(columns=["Churn", "customerID"], errors="ignore")
 
     # ✅ Sanitize the DataFrame (same as predict)
@@ -243,21 +226,21 @@ def train_and_evaluate(model, data_path="data/WA_Fn-UseC_-Telco-Customer-Churn.c
     print(classification_report(y_test, y_pred))
 
     return model
-    
-def train_and_save_models(csv_path, rf_path, lr_path):
-    print(f"Training models on: {csv_path}")
+
+def train_and_save_models(CSV_PATH, rf_path, lr_path):
+    print(f"Training models on: {CSV_PATH}")
 
     # ------------------------
     # 1. Load dataset
     # ------------------------
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(CSV_PATH)
 
     # Drop customerID if present
     if "customerID" in df.columns:
         df = df.drop("customerID", axis=1)
 
     # Encode target
-    df["Churn"] = df["Churn"].map({"No": 0, "Yes": 1})
+    df["Churn"] = df["Churn"].map({"No": 0, "yes": 1})
 
     # ------------------------
     # 2. Sanitize consistently
@@ -340,13 +323,13 @@ def train_and_save_models(csv_path, rf_path, lr_path):
         "lr_score": lr_score
     }
 
-def churn_summary(csv_path):
+def churn_summary(CSV_PATH):
     import pandas as pd
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(CSV_PATH)
     summary = {}
     
     # Confirm CSV loading
-    print("Loading CSV from:", csv_path)
+    print("Loading CSV from:", CSV_PATH)
     print("First 5 rows:\n", df.head())
 
     # Detect categorical columns
@@ -358,18 +341,18 @@ def churn_summary(csv_path):
 
     for col in categorical_cols:
         ct = pd.crosstab(df[col], df['Churn'])
-        # Ensure both 'Yes' and 'No' exist
-        for churn_val in ['No', 'Yes']:
+        # Ensure both 'yes' and 'No' exist
+        for churn_val in ['No', 'yes']:
             if churn_val not in ct.columns:
                 ct[churn_val] = 0
-        ct = ct[['No', 'Yes']]
+        ct = ct[['No', 'yes']]
 
         # Convert to list of dicts
         summary[col] = [
             {
                 "value": idx,
                 "Stayed (No Churn)": int(row['No']),
-                "Churned": int(row['Yes'])
+                "Churned": int(row['yes'])
             }
             for idx, row in ct.iterrows()
         ]
@@ -378,43 +361,37 @@ def churn_summary(csv_path):
     print("Final summary dictionary keys:", list(summary.keys()))
     return summary
 
-def generate_charts_data(csv_path="data/WA_Fn-UseC_-Telco-Customer-Churn.csv"):
-    df = pd.read_csv(csv_path)
+def aggregate_importances(feature_names, importances):
+    """
+    Aggregate one-hot encoded features back into their base column names.
+    Example:
+      - "cat__Contract_Month-to-month" → "Contract"
+      - "num__MonthlyCharges" → "MonthlyCharges"
+    """
+    agg = {}
+    for fname, importance in zip(feature_names, importances):
+        if fname.startswith("cat__"):
+            # cat__Feature_Category
+            base = fname.split("__")[1].split("_")[0]
+        elif fname.startswith("num__"):
+            # num__Feature
+            base = fname.split("__")[1]
+        else:
+            base = fname
 
-    charts = {}
+        agg[base] = agg.get(base, 0) + abs(importance)
 
-    # Contract (bar chart)
-    charts["Contract"] = {
-        "type": "bar",
-        "labels": df["Contract"].unique().tolist(),
-        "values": df.groupby("Contract")["Churn"].apply(lambda x: (x=="Yes").mean()*100).tolist()
-    }
+    # Sort descending
+    return sorted(agg.items(), key=lambda x: x[1], reverse=True)
 
-    # InternetService (bar chart)
-    charts["InternetService"] = {
-        "type": "bar",
-        "labels": df["InternetService"].unique().tolist(),
-        "values": df.groupby("InternetService")["Churn"].apply(lambda x: (x=="Yes").mean()*100).tolist()
-    }
+def churn_by_category_json():
 
-    # Tenure (line chart, binned)
-    df["tenure_bin"] = pd.cut(df["tenure"], bins=10)
-    charts["tenure"] = {
-        "type": "line",
-        "labels": df["tenure_bin"].astype(str).unique().tolist(),
-        "values": df.groupby("tenure_bin")["Churn"].apply(lambda x: (x=="Yes").mean()*100).tolist()
-    }
-
-    return charts
-
-def churn_by_category_json(csv_path):
-
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(CSV_PATH)
     charts_data = {}   # ✅ must initialize here once
 
-    # Convert SeniorCitizen from 0/1 to No/Yes
+    # Convert SeniorCitizen from 0/1 to No/yes
     if "SeniorCitizen" in df.columns:
-        df["SeniorCitizen"] = df["SeniorCitizen"].map({0: "No", 1: "Yes"})
+        df["SeniorCitizen"] = df["SeniorCitizen"].map({0: "No", 1: "yes"})
 
     # Handle categorical features
     categorical_cols = [
@@ -424,9 +401,9 @@ def churn_by_category_json(csv_path):
 
     for col in categorical_cols:
         ct = pd.crosstab(df[col], df['Churn'], normalize='index') * 100
-        if 'Yes' not in ct.columns:  # safety check
-            ct['Yes'] = 0
-        churn_rates = ct['Yes']
+        if 'yes' not in ct.columns:  # safety check
+            ct['yes'] = 0
+        churn_rates = ct['yes']
         charts_data[col] = {
             "labels": ct.index.tolist(),
             "values": churn_rates.round(1).tolist(),
@@ -446,12 +423,75 @@ def churn_by_category_json(csv_path):
                 df_sorted = df_clean.sort_values(col)
                 bins = pd.cut(df_sorted[col], bins=20)  # group into 20 bins
                 churn_rate = df_sorted.groupby(bins)['Churn'].apply(
-                    lambda x: (x == 'Yes').mean() * 100
+                    lambda x: (x == 'yes').mean() * 100
                 )
                 charts_data[col] = {
                     "labels": [f"{interval.left:.0f}-{interval.right:.0f}" for interval in churn_rate.index],
                     "values": churn_rate.round(1).tolist(),
                     "type": "line"
                 }
-
+                
     return charts_data
+
+def explain_single_logistic(model, user_row):
+    pre = model.named_steps["preprocessor"]
+    clf = model.named_steps["classifier"]
+
+    # transform row with same preprocessing
+    Xt = pre.transform(user_row)
+    feature_names = pre.get_feature_names_out()
+
+    # coefficients
+    coefs = clf.coef_[0]
+    intercept = clf.intercept_[0]
+
+    contributions = Xt.toarray()[0] * coefs  # each feature’s contribution
+    logit = intercept + contributions.sum()
+    prob = expit(logit)
+
+    print(f"Intercept: {intercept:.4f}")
+    print(f"Predicted churn probability: {prob:.4f}")
+    for name, contrib in sorted(zip(feature_names, contributions), key=lambda x: abs(x[1]), reverse=True):
+        print(f"{name}: {contrib:.4f}")
+
+def random_user():
+    user = {}
+
+    user["gender"] = random.choice(["Male", "Female"])
+    user["SeniorCitizen"] = random.choice([0, 1])
+    user["Partner"] = random.choice(["Yes", "No"])
+    user["Dependents"] = random.choice(["Yes", "No"])
+    user["tenure"] = random.randint(0, 72)
+
+    # PhoneService and MultipleLines
+    phone = random.choice(["Yes", "No"])
+    user["PhoneService"] = phone
+    if phone == "No":
+        user["MultipleLines"] = "No phone service"
+    else:
+        user["MultipleLines"] = random.choice(["Yes", "No"])
+
+    # InternetService and its dependents
+    internet = random.choice(["DSL", "Fiber optic", "No"])
+    user["InternetService"] = internet
+    if internet == "No":
+        # force all dependents to "No internet service"
+        for dep in ["OnlineSecurity","OnlineBackup","DeviceProtection",
+                    "TechSupport","StreamingTV","StreamingMovies"]:
+            user[dep] = "No internet service"
+    else:
+        for dep in ["OnlineSecurity","OnlineBackup","DeviceProtection",
+                    "TechSupport","StreamingTV","StreamingMovies"]:
+            user[dep] = random.choice(["Yes", "No"])
+
+    user["Contract"] = random.choice(["Month-to-month", "One year", "Two year"])
+    user["PaperlessBilling"] = random.choice(["Yes", "No"])
+    user["PaymentMethod"] = random.choice([
+        "Electronic check", "Mailed check",
+        "Bank transfer (automatic)", "Credit card (automatic)"
+    ])
+
+    user["MonthlyCharges"] = round(random.uniform(18.0, 120.0), 2)
+    user["TotalCharges"] = round(user["MonthlyCharges"] * user["tenure"], 2)
+
+    return user

@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, send_from_directory, session, current_app as app
-from app.agents.churn_agent import MODEL_DIR, load_model, normalize_user_input, predict_churn_batch
-import pandas as pd
+from app.agents.churn_agent import MODEL_DIR, churn_by_category_json, load_model, normalize_user_input, predict_churn_batch, aggregate_importances, random_user
 import os
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "WA_Fn-UseC_-Telco-Customer-Churn.csv")
@@ -31,120 +30,86 @@ def home():
 
         if model_name == "random_forest":
             importances = model.named_steps["classifier"].feature_importances_
-            insights = aggregate_importances(feature_names, importances)[:10]
+            insights = aggregate_importances(feature_names, importances)
 
         elif model_name == "logistic_regression":
             coefs = model.named_steps["classifier"].coef_[0]
-            insights = aggregate_importances(feature_names, coefs)[:10]
+            insights = aggregate_importances(feature_names, coefs)
     
-    charts_data = generate_charts_data()
+    # 👇 call the churn_agent function with a CSV path
+    charts_data = churn_by_category_json()
+    print("DEBUG charts_data keys passed to template:", list(charts_data.keys()))
+
     return render_template(
         "home.html",
         model_name=model_name,
         insights=insights,
         charts_data=charts_data
-)
-
-
-def generate_charts_data():
-    csv_path = os.path.join(os.path.dirname(__file__), "..", "data", "WA_Fn-UseC_-Telco-Customer-Churn.csv")
-    df = pd.read_csv(csv_path)
-
-    # Encode churn
-    df["Churn"] = df["Churn"].map({"No": 0, "Yes": 1})
-
-    charts = {}
-
-    # --- categorical charts (bars) ---
-    categorical_features = [
-        "Contract", "InternetService", "PaymentMethod", "gender",
-        "Partner", "Dependents", "PhoneService", "MultipleLines"
-    ]
-    for feature in categorical_features:
-        churn_rates = df.groupby(feature)["Churn"].mean().reset_index()
-        charts[feature] = {
-            "type": "bar",
-            "labels": churn_rates[feature].astype(str).tolist(),
-            "values": (churn_rates["Churn"] * 100).round(1).tolist()
-        }
-
-        # --- numeric charts (histograms / line) ---
-        numeric_features = ["tenure", "MonthlyCharges", "TotalCharges"]
-        for feature in numeric_features:
-            # Convert safely to numeric
-            df[feature] = pd.to_numeric(df[feature], errors="coerce")
-            df[feature] = df[feature].fillna(0)
-
-            # Bin numeric values
-            bins = pd.cut(df[feature], bins=10)
-            churn_rates = df.groupby(bins)["Churn"].mean().reset_index()
-            charts[feature] = {
-                "type": "line",
-                "labels": churn_rates[feature].astype(str).tolist(),
-                "values": (churn_rates["Churn"] * 100).round(1).tolist()
-            }
-
-    return charts
-
-def aggregate_importances(feature_names, importances):
-    """
-    Aggregate one-hot encoded features back into their base column names.
-    Example:
-      - "cat__Contract_Month-to-month" → "Contract"
-      - "num__MonthlyCharges" → "MonthlyCharges"
-    """
-    agg = {}
-    for fname, importance in zip(feature_names, importances):
-        if fname.startswith("cat__"):
-            # cat__Feature_Category
-            base = fname.split("__")[1].split("_")[0]
-        elif fname.startswith("num__"):
-            # num__Feature
-            base = fname.split("__")[1]
-        else:
-            base = fname
-
-        agg[base] = agg.get(base, 0) + abs(importance)
-
-    # Sort descending
-    return sorted(agg.items(), key=lambda x: x[1], reverse=True)
+    )
 
 @churn_bp.route("/predict", methods=["GET", "POST"])
 def predict():
     users = session.get("test_users", [])
-    return render_template("predict.html", results=None, users=users)
+    return render_template(
+        "predict.html",
+        users=users,
+        rf_results=[],
+        lr_results=[]
+    )
 
 @churn_bp.route("/predict/all", methods=["GET", "POST"])
 def predict_all():
-    # Support both query param (?model=logistic_regression) and form submit
-    model_name = request.args.get("model") or request.form.get("model", "random_forest")
-    model = load_model(model_name)
-
     users = session.get("test_users", [])
     if not users:
-        return render_template("predict.html", results=None, users=[], model_name=model_name)
+        return render_template("predict.html", users=[], rf_results=[], lr_results=[])
 
-    results = predict_churn_batch(model, users)
+    rf_model = load_model("random_forest")
+    lr_model = load_model("logistic_regression")
+
+    rf_results = predict_churn_batch(rf_model, users)
+    lr_results = predict_churn_batch(lr_model, users)
 
     return render_template(
         "predict.html",
-        results=results,
         users=users,
-        model_name=model_name
+        rf_results=rf_results,
+        lr_results=lr_results
     )
 
 @churn_bp.route("/predict/add", methods=["POST"])
 def add_user():
-    raw = request.form.to_dict()
-    customer_data = normalize_user_input(raw)
+    count = int(request.form.get("count", "1"))
 
-    # store normalized input
     if "test_users" not in session:
         session["test_users"] = []
-    session["test_users"].append(customer_data)
+
+    if count == 1:
+        raw = request.form.to_dict()
+        customer_data = normalize_user_input(raw)
+        session["test_users"].append(customer_data)
+    else:
+        for _ in range(count):
+            user = random_user()
+            user["TotalCharges"] = round(user["MonthlyCharges"] * user["tenure"], 2)
+            customer_data = normalize_user_input(user)
+            session["test_users"].append(customer_data)
+
     session.modified = True
 
-    return redirect(url_for("churn_bp.predict"))
+    # ✅ Predict with both models
+    users = session.get("test_users", [])
+    rf_model = load_model("random_forest")
+    lr_model = load_model("logistic_regression")
+
+    rf_results = predict_churn_batch(rf_model, users)
+    lr_results = predict_churn_batch(lr_model, users)
+
+    return render_template(
+        "predict.html",
+        users=users,
+        rf_results=rf_results,
+        lr_results=lr_results,
+    )
 
 @churn_bp.route('/predict/clear', methods=['POST'])
 def clear_users():

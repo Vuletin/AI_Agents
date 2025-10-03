@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Predict Customer Churn</h2>
-<p style="text-align:center;">Input customer demographics to predict churn probability</p>
-<div style="display: flex; gap: 20px;">
-  <div style="flex: 1;">
-    <div>
-      <p><label for="model">Choose Model:</label></p>
-      <select name="model" id="model">
-        <option value="random_forest">Random Forest</option>
-        <option value="logistic">Logistic Regression</option>
-      </select><br><br>
-    </div>
 
-    <hr>
-
-    <!-- Base user form (defines one user's demographics) -->
+<!-- Top layout: form left, chart right -->
+<div style="display: flex; gap: 20px; align-items: flex-start;">
+  <!-- Left column: Form -->
+  <div style="flex: 1">
+    <p style="text-align:center;">Input customer demographics to predict churn probability</p>
     <form method="POST" action="{{ url_for('churn_bp.add_user') }}">
+      <!-- model select -->
+      <p><label for="model">Choose Model:</label></p>
+        <select name="model" id="model">
+          <option value="random_forest">Random Forest</option>
+          <option value="logistic">Logistic Regression</option>
+        </select><br><br>
+        <hr>
+        <!-- Base user form (defines one user's demographics) -->
         <label for="gender">Gender:</label>
         <select id="gender" name="gender" required>
           <option value="Male">Male</option>
@@ -126,79 +126,101 @@
 
         <label for="TotalCharges">Total Charges (readonly):</label>
         <input id="TotalCharges" type="number" step="0.01" name="TotalCharges" readonly><br><br>
-      <hr>
-      <!-- Show current users count -->
-      <h3>Current Users ({{ users|length }})</h3>
-        <!-- Add buttons to quickly add multiple users -->
+        <hr>
+        <!-- Show current users count -->
+        <h3>Current Users ({{ users|length }})</h3>
+        <p>Add user from the form:</p>
         <button type="submit" name="count" value="1">+1</button>
-        <button type="submit" name="count" value="5">+5</button>
-        <button type="submit" name="count" value="10">+10</button>
-        <button type="submit" name="count" value="100">+100</button>
-    </form>
-    <br>
+        <p>Add random users:</p>
+        <button type="submit" name="count" value="5" formnovalidate>+5</button>
+        <button type="submit" name="count" value="10" formnovalidate>+10</button>
+        <button type="submit" name="count" value="100" formnovalidate>+100</button>
+      </form>
     <!-- Predict All and Clear Users -->
     {% if users %}
-      <form action="{{ url_for('churn_bp.predict_all') }}" method="get" style="display:inline;">
-        <button type="submit">Predict All</button>
-      </form>
-      <form action="{{ url_for('churn_bp.clear_users') }}" method="post" style="display:inline;">
+      <form action="{{ url_for('churn_bp.clear_users') }}" method="post" style="margin-top:10px;">
         <button type="submit">Clear Users</button>
       </form>
     {% endif %}
-
   </div>
-  <div style="flex: 1;">
-    
-  <!-- Results Section -->
-{% if results %}
-<div style="display: flex; gap: 20px;">
-  <!-- Form is on the left, chart on the right -->
-  <div style="flex: 2;">
-    <h3>Batch Prediction Results ({{ model_name }})</h3>
-    <canvas id="batchChart"></canvas>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-      const results = {{ results|tojson }};
-      const probs = results.map(r => r.probability);
 
-      // Prepare 5 bins: 0–20%, 20–40%, 40–60%, 60–80%, 80–100%
-      let bins = [0,0,0,0,0];
-      probs.forEach(p => {
-        if (p < 0.2) bins[0]++;
-        else if (p < 0.4) bins[1]++;
-        else if (p < 0.6) bins[2]++;
-        else if (p < 0.8) bins[3]++;
-        else bins[4]++;
-      });
-
-      // Create bar chart
-      const ctx = document.getElementById('batchChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%"],
-          datasets: [{
-            label: 'Users per churn probability range',
-            data: bins,
-            backgroundColor: [
-              'rgba(75, 192, 75, 0.7)',    // green = safe
-              'rgba(255, 206, 86, 0.7)',   // yellow = mild risk
-              'rgba(255, 159, 64, 0.7)',   // orange = medium risk
-              'rgba(255, 99, 132, 0.7)',   // red = high risk
-              'rgba(153, 0, 0, 0.7)'       // dark red = very high risk
-            ]
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    </script>
+  <!-- Right column: Chart -->
+  {% if rf_results and lr_results %}
+  <div style="flex: 1">
+    <h3>Prediction Results</h3>
+    <canvas id="batchChart" style="width: 100%; height: 500px;"></canvas>
   </div>
+  {% endif %}
+</div>
+
+<!-- Table spans full width below -->
+{% if users %}
+<div style="margin-top: 20px;">
+  <h3>User Details</h3>
+  <table border="1" cellpadding="5" style="width:100%;">
+    <thead>
+      <tr>
+        <th>#</th>
+        {% for key in users[0].keys() %}
+          <th>{{ key }}</th>
+        {% endfor %}
+        <th>RF Churn %</th>
+        <th>LR Churn %</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          {% for val in user.values() %}
+            <td>{{ val }}</td>
+          {% endfor %}
+          <td>{{ (rf_results[loop.index0] * 100) | round(1) }}%</td>
+          <td>{{ (lr_results[loop.index0] * 100) | round(1) }}%</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if rf_results and lr_results %}
+<script>
+   const rf = {{ rf_results|tojson }};
+  const lr = {{ lr_results|tojson }};
+  // Bin probabilities into 5 bins
+  function binProbs(arr) {
+    let bins = [0,0,0,0,0];
+    arr.forEach(p => {
+      if (p < 0.2) bins[0]++;
+      else if (p < 0.4) bins[1]++;
+      else if (p < 0.6) bins[2]++;
+      else if (p < 0.8) bins[3]++;
+      else bins[4]++;
+    });
+    return bins;
+  }
+
+  const rfBins = binProbs(rf);
+  const lrBins = binProbs(lr);
+
+  const ctx = document.getElementById('batchChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%"],
+      datasets: [
+        { label: "Random Forest", data: rfBins, backgroundColor: "rgba(255,99,132,0.7)" },
+        { label: "Logistic Regression", data: lrBins, backgroundColor: "rgba(75,192,192,0.7)" }
+      ]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+</script>
+{% endif %}
+
+  <div>
     <script>
       document.addEventListener("DOMContentLoaded", function() {
           const internetService = document.getElementById("InternetService");
