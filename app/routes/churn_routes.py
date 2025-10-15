@@ -1,3 +1,4 @@
+import random
 from flask import Blueprint, render_template, request, redirect, url_for, send_from_directory, session, current_app as app
 from app.agents.churn_agent import MODEL_DIR, churn_by_category_json, load_model, normalize_user_input, predict_churn_batch, aggregate_importances, random_user
 import os
@@ -50,11 +51,26 @@ def home():
 @churn_bp.route("/predict", methods=["GET", "POST"])
 def predict():
     users = session.get("test_users", [])
+
+    rf_results = []
+    lr_results = []
+    # If there are users in session, compute predictions so the chart can render
+    if users:
+        try:
+            rf_model = load_model("random_forest")
+            lr_model = load_model("logistic_regression")
+            rf_results = predict_churn_batch(rf_model, users) or []
+            lr_results = predict_churn_batch(lr_model, users) or []
+        except FileNotFoundError:
+            # models not trained/saved yet
+            rf_results = []
+            lr_results = []
+
     return render_template(
         "predict.html",
         users=users,
-        rf_results=[],
-        lr_results=[]
+        rf_results=rf_results,
+        lr_results=lr_results
     )
 
 @churn_bp.route("/predict/all", methods=["GET", "POST"])
@@ -79,30 +95,40 @@ def predict_all():
 @churn_bp.route("/predict/add", methods=["POST"])
 def add_user():
     count = int(request.form.get("count", "1"))
+    is_random = "random" in request.form
 
     if "test_users" not in session:
         session["test_users"] = []
 
-    if count == 1:
+    # Case 1: Normal manual input from form
+    if count == 1 and not is_random:
         raw = request.form.to_dict()
+        raw.pop("count", None)  # ✅ remove button value
+        raw.pop("random", None)  # ✅ safety: also remove hidden random field if any
         customer_data = normalize_user_input(raw)
         session["test_users"].append(customer_data)
+
+    # Case 2: Random users (bulk or +1 random button)
     else:
         for _ in range(count):
             user = random_user()
+            user["tenure"] = int(user.get("tenure", random.randint(1, 72)))
+            user["MonthlyCharges"] = float(user.get("MonthlyCharges", round(random.uniform(18.0, 120.0), 2)))
             user["TotalCharges"] = round(user["MonthlyCharges"] * user["tenure"], 2)
             customer_data = normalize_user_input(user)
             session["test_users"].append(customer_data)
 
     session.modified = True
 
-    # ✅ Predict with both models
-    users = session.get("test_users", [])
     rf_model = load_model("random_forest")
     lr_model = load_model("logistic_regression")
 
+    users = session.get("test_users", [])
     rf_results = predict_churn_batch(rf_model, users)
     lr_results = predict_churn_batch(lr_model, users)
+
+    rf_results = rf_results if rf_results else []
+    lr_results = lr_results if lr_results else []
 
     return render_template(
         "predict.html",

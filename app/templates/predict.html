@@ -7,15 +7,8 @@
   <!-- Left column: Form -->
   <div style="flex: 1">
     <p style="text-align:center;">Input customer demographics to predict churn probability</p>
-    <form method="POST" action="{{ url_for('churn_bp.add_user') }}">
-      <!-- model select -->
-      <p><label for="model">Choose Model:</label></p>
-        <select name="model" id="model">
-          <option value="random_forest">Random Forest</option>
-          <option value="logistic">Logistic Regression</option>
-        </select><br><br>
-        <hr>
-        <!-- Base user form (defines one user's demographics) -->
+  <!-- Manual add form: Base user form (defines one user's demographics) -->
+  <form id="manualAddForm" method="POST" action="{{ url_for('churn_bp.add_user') }}">
         <label for="gender">Gender:</label>
         <select id="gender" name="gender" required>
           <option value="Male">Male</option>
@@ -118,24 +111,30 @@
 
         <label for="Tenure">Tenure (months):</label>
         <label for="Tenure">(between 1 and 72):</label>
-        <input id="tenure" type="number" step="1" name="tenure" min="1" max="72" required><br><br>
+        <input id="tenure" type="number" step="1" name="tenure" min="1" max="72" required oninput="updateTotalCharges()"><br><br>
 
         <label for="MonthlyCharges">Monthly Charges:</label>
         <label for="MonthlyCharges">(between $18 and $120):</label>
-        <input id="MonthlyCharges" type="number" step="0.01" name="MonthlyCharges" min="18" max="120" required><br><br>
+        <input id="MonthlyCharges" type="number" step="0.01" name="MonthlyCharges" min="18" max="120" required oninput="updateTotalCharges()"><br><br>
 
         <label for="TotalCharges">Total Charges (readonly):</label>
         <input id="TotalCharges" type="number" step="0.01" name="TotalCharges" readonly><br><br>
         <hr>
         <!-- Show current users count -->
         <h3>Current Users ({{ users|length }})</h3>
-        <p>Add user from the form:</p>
+        <!-- Add a user with the values from the form above -->
         <button type="submit" name="count" value="1">+1</button>
-        <p>Add random users:</p>
-        <button type="submit" name="count" value="5" formnovalidate>+5</button>
-        <button type="submit" name="count" value="10" formnovalidate>+10</button>
-        <button type="submit" name="count" value="100" formnovalidate>+100</button>
-      </form>
+    </form>
+
+    <!-- Random add buttons (separate form, not nested) -->
+    <form method="POST" action="{{ url_for('churn_bp.add_user') }}">
+      <input type="hidden" name="random" value="1">
+      <p>Add users with random stats:</p>
+      <button type="submit" name="count" value="1" formnovalidate>+1</button>
+      <button type="submit" name="count" value="5" formnovalidate>+5</button>
+      <button type="submit" name="count" value="10" formnovalidate>+10</button>
+      <button type="submit" name="count" value="100" formnovalidate>+100</button>
+    </form>
     <!-- Predict All and Clear Users -->
     {% if users %}
       <form action="{{ url_for('churn_bp.clear_users') }}" method="post" style="margin-top:10px;">
@@ -145,89 +144,102 @@
   </div>
 
   <!-- Right column: Chart -->
-  {% if rf_results and lr_results %}
-  <div style="flex: 1">
-    <h3>Prediction Results</h3>
-    <canvas id="batchChart" style="width: 100%; height: 500px;"></canvas>
-  </div>
+  {% if users %}
+    <div style="flex: 1">
+      <h3>Prediction Results</h3>
+      <canvas id="batchChart" style="width: 100%; height: 500px;"></canvas>
+    </div>
   {% endif %}
 </div>
 
-<!-- Table spans full width below -->
+{# Table below the row: full width - show if users exist #}
 {% if users %}
-<div style="margin-top: 20px;">
-  <h3>User Details</h3>
-  <table border="1" cellpadding="5" style="width:100%;">
-    <thead>
-      <tr>
-        <th>#</th>
-        {% for key in users[0].keys() %}
-          <th>{{ key }}</th>
-        {% endfor %}
-        <th>RF Churn %</th>
-        <th>LR Churn %</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
+  <div style="margin-top: 20px;">
+    <h3>User Details</h3>
+
+    {% set columns = [
+      "#",
+      "gender",
+      "SeniorCitizen",
+      "Partner",
+      "Dependents",
+      "tenure",
+      "PhoneService",
+      "MultipleLines",
+      "InternetService",
+      "OnlineSecurity",
+      "OnlineBackup",
+      "DeviceProtection",
+      "TechSupport",
+      "StreamingTV",
+      "StreamingMovies",
+      "Contract",
+      "PaperlessBilling",
+      "PaymentMethod",
+      "MonthlyCharges",
+      "TotalCharges",
+      "RF Churn %",
+      "LR Churn %"
+    ] %}
+
+    <table border="1" cellpadding="5" style="width:100%; border-collapse: collapse;">
+      <thead style="background-color: #f2f2f2; text-align: left;">
         <tr>
-          <td>{{ loop.index }}</td>
-          {% for val in user.values() %}
-            <td>{{ val }}</td>
+          {% for col in columns %}
+            <th>{{ col }}</th>
           {% endfor %}
-          <td>{{ (rf_results[loop.index0] * 100) | round(1) }}%</td>
-          <td>{{ (lr_results[loop.index0] * 100) | round(1) }}%</td>
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% endif %}
+      </thead>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% if rf_results and lr_results %}
-<script>
-   const rf = {{ rf_results|tojson }};
-  const lr = {{ lr_results|tojson }};
-  // Bin probabilities into 5 bins
-  function binProbs(arr) {
-    let bins = [0,0,0,0,0];
-    arr.forEach(p => {
-      if (p < 0.2) bins[0]++;
-      else if (p < 0.4) bins[1]++;
-      else if (p < 0.6) bins[2]++;
-      else if (p < 0.8) bins[3]++;
-      else bins[4]++;
-    });
-    return bins;
-  }
+      <tbody>
+        {% for user in users %}
+          {% set row_index = loop.index0 %}
+          {% set row_number = loop.index %}
 
-  const rfBins = binProbs(rf);
-  const lrBins = binProbs(lr);
+          <tr>
+            {% for col in columns %}
+              {% if col == "#" %}
+                <td style="text-align:center;">{{ row_number }}</td>
 
-  const ctx = document.getElementById('batchChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%"],
-      datasets: [
-        { label: "Random Forest", data: rfBins, backgroundColor: "rgba(255,99,132,0.7)" },
-        { label: "Logistic Regression", data: lrBins, backgroundColor: "rgba(75,192,192,0.7)" }
-      ]
-    },
-    options: { scales: { y: { beginAtZero: true } } }
-  });
-</script>
+              {% elif col == "RF Churn %" %}
+                {% if rf_results and row_index < rf_results|length %}
+                  <td style="text-align:right;">{{ (rf_results[row_index] * 100) | round(1) }}%</td>
+                {% else %}
+                  <td style="text-align:right;">–</td>
+                {% endif %}
+
+              {% elif col == "LR Churn %" %}
+                {% if lr_results and row_index < lr_results|length %}
+                  <td style="text-align:right;">{{ (lr_results[row_index] * 100) | round(1) }}%</td>
+                {% else %}
+                  <td style="text-align:right;">–</td>
+                {% endif %}
+
+              {% elif col in ["MonthlyCharges", "TotalCharges", "tenure"] %}
+                <td style="text-align:right;">{{ user[col] if col in user else "–" }}</td>
+
+              {% else %}
+                <td>{{ user[col] if col in user else "–" }}</td>
+              {% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p>No users added yet.</p>
 {% endif %}
 
   <div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function() {
-          const internetService = document.getElementById("InternetService");
           const internetDependents = [
               "OnlineSecurity", "OnlineBackup", "DeviceProtection",
               "TechSupport", "StreamingTV", "StreamingMovies"
           ];
+          const internetService = document.getElementById("InternetService");
           const phoneService = document.getElementById("PhoneService");
           const multipleLines = document.getElementById("MultipleLines");
           const tenure = document.getElementById("tenure");
@@ -283,19 +295,91 @@
           }
           phoneService.addEventListener("change", handlePhoneService);
 
-          // --- Rule 3: TotalCharges ≈ MonthlyCharges * tenure ---
-          function updateTotalCharges() {
-              const m = parseFloat(monthlyCharges.value) || 0;
-              const t = parseFloat(tenure.value) || 0;
-              totalCharges.value = (m * t).toFixed(2);
-          }
+      // --- Rule 3: TotalCharges = MonthlyCharges * tenure ---
+      function updateTotalCharges() {
+        const m = parseFloat(monthlyCharges.value) || 0;
+        const t = parseFloat(tenure.value) || 0;
+        totalCharges.value = (m * t).toFixed(2);
+      }
           tenure.addEventListener("input", updateTotalCharges);
           monthlyCharges.addEventListener("input", updateTotalCharges);
 
-          // Run once on load
-          handleInternetService();
-          handlePhoneService();
+      // Run once on load
+      handleInternetService();
+      handlePhoneService();
+      updateTotalCharges();
+
+      // Ensure TotalCharges is correct before submitting the manual add form
+      const manualForm = document.getElementById('manualAddForm');
+      if (manualForm) {
+        manualForm.addEventListener('submit', function () {
           updateTotalCharges();
+        });
+      }
       });
-      </script>
+    </script>
+    {% if rf_results or lr_results %}
+    <script>
+      // pass server arrays to JS safely
+      const rf = {{ rf_results | tojson | safe }} || [];
+      const lr = {{ lr_results | tojson | safe }} || [];
+      console.log('predict page rf/lr', rf, lr);
+
+      function binProbs(arr) {
+        // 10 bins: 0-10%, 10-20%, ..., 90-100%
+        let bins = new Array(10).fill(0);
+        arr.forEach(p => {
+          const v = Number(p) || 0;
+          // clamp into [0,1]
+          const clamped = Math.max(0, Math.min(1, v));
+          const idx = Math.min(9, Math.floor(clamped * 10));
+          bins[idx]++;
+        });
+        return bins;
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // coerce entries to numbers
+        const rfNums = rf.map(x => Number(x) || 0);
+        const lrNums = lr.map(x => Number(x) || 0);
+
+        const rfBins = binProbs(rfNums);
+        const lrBins = binProbs(lrNums);
+
+        const canvas = document.getElementById('batchChart');
+        if (!canvas) {
+          console.warn('batchChart canvas not found');
+          return;
+        }
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ["0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"],
+            datasets: [
+              { label: "Random Forest", data: rfBins, backgroundColor: "rgba(255,99,132,0.7)" },
+              { label: "Logistic Regression", data: lrBins, backgroundColor: "rgba(75,192,192,0.7)" }
+            ]
+          },
+          options: { scales: { y: { beginAtZero: true } } }
+        });
+      });
+    </script>
+    {% endif %}
+    <script>
+      // Ensure updateTotalCharges is available globally for inline handlers
+      window.updateTotalCharges = function () {
+        try {
+          const mEl = document.getElementById('MonthlyCharges');
+          const tEl = document.getElementById('tenure');
+          const totalEl = document.getElementById('TotalCharges');
+          if (!mEl || !tEl || !totalEl) return;
+          const m = parseFloat(mEl.value) || 0;
+          const t = parseFloat(tEl.value) || 0;
+          totalEl.value = (m * t).toFixed(2);
+        } catch (e) {
+          console.error('updateTotalCharges error', e);
+        }
+      };
+    </script>
 {% endblock %}

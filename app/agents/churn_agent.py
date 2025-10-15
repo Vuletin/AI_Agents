@@ -21,6 +21,7 @@ CATEGORICAL_FIELDS = [
     "StreamingTV", "StreamingMovies", "Contract",
     "PaperlessBilling", "PaymentMethod"
 ]
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # goes up from app/agents
 CSV_PATH = os.path.join(BASE_DIR, "data", "WA_Fn-UseC_-Telco-Customer-Churn.csv")
 
@@ -61,12 +62,18 @@ def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     # Rule 3: Fix TotalCharges only if missing
     if {"MonthlyCharges", "tenure", "TotalCharges"}.issubset(df.columns):
+        # Ensure numeric conversion first
         df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
-        # Fill blanks with MonthlyCharges * tenure
-    if "InternetService" in df.columns:
-        df.loc[df["TotalCharges"].isna(), "TotalCharges"] = (
-            df["MonthlyCharges"].astype(float) * df["tenure"].astype(float)
-        )
+        df["MonthlyCharges"] = pd.to_numeric(df["MonthlyCharges"], errors="coerce")
+        df["tenure"] = pd.to_numeric(df["tenure"], errors="coerce")
+        # Fill blanks with MonthlyCharges * tenure where needed
+        missing_mask = df["TotalCharges"].isna()
+        if missing_mask.any():
+            # Use MonthlyCharges * tenure
+            df.loc[missing_mask, "TotalCharges"] = (
+                df.loc[missing_mask, "MonthlyCharges"].astype(float) *
+                df.loc[missing_mask, "tenure"].astype(float)
+            )
 
     # Coerce numeric fields
     for c in numeric_fields:
@@ -197,7 +204,7 @@ def predict_churn_batch(model, users: list):
     probs = model.predict_proba(df_aligned)[:, 1]
     results = []
     for user, prob in zip(users, probs):
-        print("DEBUG RF user prob:", prob, "row:", user)
+        # print("DEBUG RF user prob:", prob, "row:", user)
         results.append({**user, "churn_probability": round(float(prob), 4)})
 
     return list(map(float, probs))
@@ -462,7 +469,7 @@ def random_user():
     user["Partner"] = random.choice(["Yes", "No"])
     user["Dependents"] = random.choice(["Yes", "No"])
     user["tenure"] = random.randint(0, 72)
-
+    
     # PhoneService and MultipleLines
     phone = random.choice(["Yes", "No"])
     user["PhoneService"] = phone
