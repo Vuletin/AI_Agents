@@ -394,6 +394,11 @@ def aggregate_importances(feature_names, importances):
 def churn_by_category_json():
 
     df = pd.read_csv(CSV_PATH)
+    # locally normalize churn values (do NOT persist a column to the dataframe)
+    if 'Churn' in df.columns:
+        churn_norm = df['Churn'].astype(str).str.strip().str.lower()
+    else:
+        churn_norm = pd.Series([''] * len(df), index=df.index)
     charts_data = {}   # ✅ must initialize here once
 
     # Convert SeniorCitizen from 0/1 to No/yes
@@ -407,7 +412,8 @@ def churn_by_category_json():
     ]
 
     for col in categorical_cols:
-        ct = pd.crosstab(df[col], df['Churn'], normalize='index') * 100
+        # use normalized churn values so casing doesn't break counts
+        ct = pd.crosstab(df[col], churn_norm, normalize='index') * 100
         if 'yes' not in ct.columns:  # safety check
             ct['yes'] = 0
         churn_rates = ct['yes']
@@ -428,9 +434,11 @@ def churn_by_category_json():
 
             if not df_clean.empty:
                 df_sorted = df_clean.sort_values(col)
-                bins = pd.cut(df_sorted[col], bins=20)  # group into 20 bins
-                churn_rate = df_sorted.groupby(bins)['Churn'].apply(
-                    lambda x: (x == 'yes').mean() * 100
+                # group into 10 bins to represent ~10% buckets for visualization
+                bins = pd.cut(df_sorted[col], bins=10)
+                # use normalized churn values (refer to churn_norm for these rows)
+                churn_rate = df_sorted.groupby(bins).apply(
+                    lambda g: (churn_norm.loc[g.index] == 'yes').mean() * 100
                 )
                 charts_data[col] = {
                     "labels": [f"{interval.left:.0f}-{interval.right:.0f}" for interval in churn_rate.index],

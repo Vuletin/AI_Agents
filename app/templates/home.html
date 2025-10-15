@@ -48,40 +48,52 @@
                 {% endfor %}
             </select>
         </div>
-        <canvas id="churnChart"></canvas>
+    <canvas id="churnChart" style="width:100%; height:400px;"></canvas>
     </div>
 </div>
 
 <script>
     const chartsData = {{ charts_data | tojson | safe }};
+    console.log('chartsData:', chartsData);
     const featureSelect = document.getElementById('featureSelect');
-    const ctx = document.getElementById('churnChart').getContext('2d');
+    const ctxEl = document.getElementById('churnChart');
+    const ctx = ctxEl && ctxEl.getContext ? ctxEl.getContext('2d') : null;
 
-    let initialFeature = featureSelect.value;
-    let chart = new Chart(ctx, {
-        type: chartsData[initialFeature].type,
-        data: {
-            labels: chartsData[initialFeature].labels,
-            datasets: [{
-                label: 'Churn Rate (%)',
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                fill: false,
-                data: chartsData[initialFeature].values
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } }
+    // pick a safe initial feature (fallback to first key)
+    const availableFeatures = Object.keys(chartsData || {});
+    let initialFeature = featureSelect && featureSelect.value ? featureSelect.value : (availableFeatures.length ? availableFeatures[0] : null);
+
+    if (initialFeature && chartsData[initialFeature] && ctx) {
+        let chart = new Chart(ctx, {
+            type: chartsData[initialFeature].type,
+            data: {
+                labels: chartsData[initialFeature].labels,
+                datasets: [{
+                    label: 'Churn Rate (%)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: false,
+                    data: chartsData[initialFeature].values
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        if (featureSelect) {
+            featureSelect.addEventListener('change', function() {
+                let selected = this.value;
+                if (!chartsData[selected]) return;
+                chart.config.type = chartsData[selected].type;
+                chart.data.labels = chartsData[selected].labels;
+                chart.data.datasets[0].data = chartsData[selected].values;
+                chart.update();
+            });
         }
-    });
-
-    featureSelect.addEventListener('change', function() {
-        let selected = this.value;
-        chart.config.type = chartsData[selected].type;
-        chart.data.labels = chartsData[selected].labels;
-        chart.data.datasets[0].data = chartsData[selected].values;
-        chart.update();
-    });
+    } else {
+        console.warn('No chartsData available or canvas/context missing', { initialFeature, availableFeatures, ctxExists: !!ctx });
+    }
 </script>
 {% endblock %}
