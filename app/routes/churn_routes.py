@@ -1,4 +1,5 @@
 import random
+import uuid
 from flask import Blueprint, render_template, request, redirect, url_for, send_from_directory, session, current_app as app
 from app.agents.churn_agent import MODEL_DIR, churn_by_category_json, load_model, normalize_user_input, predict_churn_batch, aggregate_importances, random_user
 import os
@@ -11,6 +12,10 @@ RF_PATH = os.path.join(MODEL_DIR, "random_forest.pkl")
 LR_PATH = os.path.join(MODEL_DIR, "logistic_regression.pkl")
 
 churn_bp = Blueprint('churn_bp', __name__)
+
+# Simple in-memory server-side store for test users to avoid blowing up the client-side session cookie
+# Keyed by a small UUID stored in the user's session. This is ephemeral and per-process.
+USER_STORE = {}
 
 try:
     model = load_model("random_forest")  # default to RF
@@ -50,7 +55,9 @@ def home():
 
 @churn_bp.route("/predict", methods=["GET", "POST"])
 def predict():
-    users = session.get("test_users", [])
+    # Use server-side store keyed by a UUID in the session
+    store_id = session.get('user_store_id')
+    users = USER_STORE.get(store_id, []) if store_id else []
 
     rf_results = []
     lr_results = []
@@ -75,7 +82,8 @@ def predict():
 
 @churn_bp.route("/predict/all", methods=["GET", "POST"])
 def predict_all():
-    users = session.get("test_users", [])
+    store_id = session.get('user_store_id')
+    users = USER_STORE.get(store_id, []) if store_id else []
     if not users:
         return render_template("predict.html", users=[], rf_results=[], lr_results=[])
 
@@ -96,17 +104,22 @@ def predict_all():
 def add_user():
     count = int(request.form.get("count", "1"))
     is_random = "random" in request.form
+    # Ensure a store_id exists for this session
+    store_id = session.get('user_store_id')
+    if not store_id:
+        store_id = str(uuid.uuid4())
+        session['user_store_id'] = store_id
 
-    if "test_users" not in session:
-        session["test_users"] = []
+    if store_id not in USER_STORE:
+        USER_STORE[store_id] = []
 
     # Case 1: Normal manual input from form
     if count == 1 and not is_random:
         raw = request.form.to_dict()
-        raw.pop("count", None)  # ✅ remove button value
-        raw.pop("random", None)  # ✅ safety: also remove hidden random field if any
+        raw.pop("count", None)  # remove button value
+        raw.pop("random", None)  # safety: also remove hidden random field if any
         customer_data = normalize_user_input(raw)
-        session["test_users"].append(customer_data)
+        USER_STORE[store_id].append(customer_data)
 
     # Case 2: Random users (bulk or +1 random button)
     else:
@@ -116,14 +129,14 @@ def add_user():
             user["MonthlyCharges"] = float(user.get("MonthlyCharges", round(random.uniform(18.0, 120.0), 2)))
             user["TotalCharges"] = round(user["MonthlyCharges"] * user["tenure"], 2)
             customer_data = normalize_user_input(user)
-            session["test_users"].append(customer_data)
+            USER_STORE[store_id].append(customer_data)
 
     session.modified = True
 
     rf_model = load_model("random_forest")
     lr_model = load_model("logistic_regression")
 
-    users = session.get("test_users", [])
+    users = USER_STORE.get(session.get('user_store_id'), [])
     rf_results = predict_churn_batch(rf_model, users)
     lr_results = predict_churn_batch(lr_model, users)
 
@@ -139,7 +152,9 @@ def add_user():
 
 @churn_bp.route('/predict/clear', methods=['POST'])
 def clear_users():
-    session.pop("test_users", None)
+    store_id = session.pop('user_store_id', None)
+    if store_id and store_id in USER_STORE:
+        USER_STORE.pop(store_id, None)
     return redirect(url_for("churn_bp.predict"))
 
 @churn_bp.route('/favicon.ico')
