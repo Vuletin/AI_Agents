@@ -3,128 +3,168 @@
 <h2>Predict Customer Churn</h2>
 
 <!-- Top layout: form left, chart right -->
-<div style="display: flex; gap: 20px; align-items: flex-start;">
+<div class="predict-top">
   <!-- Left column: Form -->
-  <div style="flex: 1">
-    <p style="text-align:center;">Input customer demographics to predict churn probability</p>
+  <div style="flex: 1" class="form-selection">
+    <div class="card">
+      <h3 class="lead" style="text-align: left;">Input customer demographics to predict churn probability</h3>
   <!-- Manual add form: Base user form (defines one user's demographics) -->
-  <form id="manualAddForm" method="POST" action="{{ url_for('churn_bp.add_user') }}">
-        <label for="gender">Gender:</label>
-        <select id="gender" name="gender" required>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select><br><br>
-        
-        <label for="SeniorCitizen">Senior Citizen:</label>
-        <select id="SeniorCitizen" name="SeniorCitizen" required>
-          <option value="1">Yes</option>
-          <option value="0">No</option>
-        </select><br><br>
+    <form id="manualAddForm" class="form-grid" method="POST" action="{{ url_for('churn_bp.add_user') }}">
+        <div class="field">
+          <label for="gender">Gender:</label>
+          <select id="gender" name="gender" required>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
 
-        <label for="Partner">Partner:</label>
-        <select id="Partner" name="Partner" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="SeniorCitizen">Senior Citizen:</label>
+          <select id="SeniorCitizen" name="SeniorCitizen" required>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+          </select>
+        </div>
 
-        <label for="Dependents">Dependents:</label>
-        <select id="Dependents" name="Dependents" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="Partner">Partner:</label>
+          <select id="Partner" name="Partner" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="PhoneService">Phone Service:</label>
-        <select id="PhoneService" name="PhoneService" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="Dependents">Dependents:</label>
+          <select id="Dependents" name="Dependents" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="MultipleLines">Multiple Lines:</label>
-        <select id="MultipleLines" name="MultipleLines" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="PhoneService">Phone Service:</label>
+          <select id="PhoneService" name="PhoneService" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="InternetService">Internet Service:</label>
-        <select id="InternetService" name="InternetService" required>
-          <option value="DSL">DSL</option>
-          <option value="Fiber optic">Fiber optic</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="MultipleLines">Multiple Lines:</label>
+          <select id="MultipleLines" name="MultipleLines" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="OnlineSecurity">Online Security:</label>
-        <select id="OnlineSecurity" name="OnlineSecurity" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="InternetService">Internet Service:</label>
+          <select id="InternetService" name="InternetService" required>
+            <option value="DSL">DSL</option>
+            <option value="Fiber optic">Fiber optic</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="OnlineBackup">Online Backup:</label>
-        <select id="OnlineBackup" name="OnlineBackup" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="OnlineSecurity">Online Security:</label>
+          <select id="OnlineSecurity" name="OnlineSecurity" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="DeviceProtection">Device Protection:</label>
-        <select id="DeviceProtection" name="DeviceProtection" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="OnlineBackup">Online Backup:</label>
+          <select id="OnlineBackup" name="OnlineBackup" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="TechSupport">Tech Support:</label>
-        <select id="TechSupport" name="TechSupport" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="DeviceProtection">Device Protection:</label>
+          <select id="DeviceProtection" name="DeviceProtection" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="StreamingTV">Streaming TV:</label>
-        <select id="StreamingTV" name="StreamingTV" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="TechSupport">Tech Support:</label>
+          <select id="TechSupport" name="TechSupport" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="StreamingMovies">Streaming Movies:</label>
-        <select id="StreamingMovies" name="StreamingMovies" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="StreamingTV">Streaming TV:</label>
+          <select id="StreamingTV" name="StreamingTV" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="Contract">Contract:</label>
-        <select id="Contract" name="Contract" required>
-          <option value="Month-to-month">Month-to-month</option>
-          <option value="One year">One year</option>
-          <option value="Two year">Two year</option>
-        </select><br><br>
+        <div class="field">
+          <label for="StreamingMovies">Streaming Movies:</label>
+          <select id="StreamingMovies" name="StreamingMovies" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="PaperlessBilling">Paperless Billing:</label>
-        <select id="PaperlessBilling" name="PaperlessBilling" required>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select><br><br>
+        <div class="field">
+          <label for="Contract">Contract:</label>
+          <select id="Contract" name="Contract" required>
+            <option value="Month-to-month">Month-to-month</option>
+            <option value="One year">One year</option>
+            <option value="Two year">Two year</option>
+          </select>
+        </div>
 
-        <label for="PaymentMethod">Payment Method:</label>
-        <select id="PaymentMethod" name="PaymentMethod" required>
-          <option value="Electronic check">Electronic check</option>
-          <option value="Mailed check">Mailed check</option>
-          <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
-          <option value="Credit card (automatic)">Credit card (automatic)</option>
-        </select><br><br>
+        <div class="field">
+          <label for="PaperlessBilling">Paperless Billing:</label>
+          <select id="PaperlessBilling" name="PaperlessBilling" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
 
-        <label for="Tenure">Tenure (months):</label>
-        <label for="Tenure">(between 1 and 72):</label>
-        <input id="tenure" type="number" step="1" name="tenure" min="1" max="72" required oninput="updateTotalCharges()"><br><br>
+        <div class="field">
+          <label for="PaymentMethod">Payment Method:</label>
+          <select id="PaymentMethod" name="PaymentMethod" required>
+            <option value="Electronic check">Electronic check</option>
+            <option value="Mailed check">Mailed check</option>
+            <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+            <option value="Credit card (automatic)">Credit card (automatic)</option>
+          </select>
+        </div>
 
-        <label for="MonthlyCharges">Monthly Charges:</label>
-        <label for="MonthlyCharges">(between $18 and $120):</label>
-        <input id="MonthlyCharges" type="number" step="0.01" name="MonthlyCharges" min="18" max="120" required oninput="updateTotalCharges()"><br><br>
+        <div class="field">
+          <label for="tenure">Tenure (months) <span class="muted">(between 1 and 72)</span></label>
+          <input id="tenure" type="number" step="1" name="tenure" min="1" max="72" required oninput="updateTotalCharges()">
+        </div>
 
-        <label for="TotalCharges">Total Charges (readonly):</label>
-        <input id="TotalCharges" type="number" step="0.01" name="TotalCharges" readonly><br><br>
-        <hr>
-        <!-- Show current users count -->
-        <h3>Current Users ({{ users|length }})</h3>
-        <!-- Add a user with the values from the form above -->
-        <button type="submit" name="count" value="1">+1</button>
-    </form>
+        <div class="field">
+          <label for="MonthlyCharges">Monthly Charges <span class="muted">(between $18 and $120)</span></label>
+          <input id="MonthlyCharges" type="number" step="0.01" name="MonthlyCharges" min="18" max="120" required oninput="updateTotalCharges()">
+        </div>
+
+        <div class="field">
+          <label for="TotalCharges">Total Charges (readonly):</label>
+          <input id="TotalCharges" type="number" step="0.01" name="TotalCharges" readonly>
+        </div>
+
+        <hr />
+        <div class="actions">
+          <h3 style="margin:0; align-self:center;">Current Users ({{ users|length }})</h3>
+          <!-- Add a user with the values from the form above -->
+          <button type="submit" name="count" value="1">+1</button>
+        </div>
+  </form>
+    </div>
 
     <!-- Random add buttons (separate form, not nested) -->
     <form method="POST" action="{{ url_for('churn_bp.add_user') }}">
@@ -146,8 +186,10 @@
   <!-- Right column: Chart -->
   {% if users %}
     <div style="flex: 1">
-      <h3>Prediction Results</h3>
-      <canvas id="batchChart" style="width: 100%; height: 500px;"></canvas>
+      <div class="chart-wrap">
+        <h3>Prediction Results</h3>
+        <canvas id="batchChart" style="width: 100%; height: 500px;"></canvas>
+      </div>
     </div>
   {% endif %}
 </div>
@@ -351,8 +393,12 @@
           console.warn('batchChart canvas not found');
           return;
         }
+        // destroy previous chart instance if present to avoid duplicates
+        if (canvas.__chartInstance) {
+          try { canvas.__chartInstance.destroy(); } catch (e) { /* ignore */ }
+        }
         const ctx = canvas.getContext('2d');
-        new Chart(ctx, {
+        canvas.__chartInstance = new Chart(ctx, {
           type: 'bar',
           data: {
             labels: ["0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"],
@@ -361,7 +407,7 @@
               { label: "Logistic Regression", data: lrBins, backgroundColor: "rgba(75,192,192,0.7)" }
             ]
           },
-          options: { scales: { y: { beginAtZero: true } } }
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
         });
       });
     </script>

@@ -1,0 +1,251 @@
+
+table {
+width: 100%;
+border-collapse: separate;
+border-spacing: 0;
+border-radius: 12px;
+overflow: hidden;
+box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+font-family: system-ui, sans-serif;
+}
+
+thead {
+background-color: #f4f6f8;
+}
+
+thead th {
+padding: 10px;
+text-align: left;
+font-weight: 600;
+border-bottom: 2px solid #ddd;
+}
+
+tbody tr:nth-child(even) {
+background-color: #fafafa; /* ✅ zebra row */
+}
+
+tbody tr:hover {
+background-color: #e6f0ff; /* ✅ hover highlight */
+transition: background-color 0.2s ease;
+}
+
+td {
+padding: 8px 10px;
+border-bottom: 1px solid #eee;
+vertical-align: middle;
+}
+
+th:first-child, td:first-child {
+text-align: center;
+width: 40px;
+}
+
+th, td {
+border-right: 1px solid #eee;
+}
+
+th:last-child, td:last-child {
+border-right: none;
+}
+
+/* Modern compact form and card layout */
+.card {
+	background: #ffffff;
+	border-radius: 12px;
+	padding: 16px;
+	box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+:root {
+  --card-width: 560px;
+  --chart-aspect: 16 / 9;
+  --chart-transition: 320ms ease;
+}
+
+.form-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px 16px;
+	align-items: center;
+}
+
+.form-grid .field {
+	display: flex;
+	flex-direction: column;
+}
+
+.form-grid hr {
+	grid-column: 1 / -1;
+	border: none;
+	height: 1px;
+	background: #eef2f6;
+	margin: 6px 0;
+}
+
+.form-grid .actions {
+	grid-column: 1 / -1;
+	display: flex;
+	gap: 8px;
+	justify-content: flex-start;
+}
+
+label {
+	display: block;
+	font-size: 0.92rem;
+	color: #374151; /* neutral-700 */
+	margin-bottom: 6px;
+}
+
+input[type="number"], select {
+	width: 100%;
+	padding: 8px 10px;
+	border: 1px solid #e6e9ee;
+	border-radius: 8px;
+	background: #fff;
+	font-size: 0.95rem;
+	color: #0f172a;
+}
+
+/* Make controls visually shorter on wide screens (about half width) */
+.form-grid .field > input[type="number"],
+.form-grid .field > select {
+  max-width: 56%; /* roughly half; adjust as desired */
+  margin-left: 0; 
+}
+
+/* Center shorter controls within their grid cell for balance */
+.form-grid .field { align-items: start; }
+.form-grid .field > input, .form-grid .field > select { display: inline-block; }
+
+/* Keep buttons compact — don't make them huge */
+button {
+	padding: 8px 12px;
+	border-radius: 8px;
+	border: none;
+	background: #2563eb; /* blue-600 */
+	color: white;
+	font-weight: 600;
+	cursor: pointer;
+	font-size: 0.95rem;
+}
+
+button[formnovalidate] {
+	background: #10b981; /* green-500 for random add */
+}
+
+button:hover { transform: translateY(-1px); }
+
+.muted {
+	color: #6b7280;
+	font-size: 0.92rem;
+}
+
+/* Headline and text styling */
+h2, h3 {
+	color: #0f172a;
+	font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+h2 {
+	font-size: 1.35rem;
+	margin-bottom: 12px;
+}
+
+p.lead {
+	margin-top: 0;
+	margin-bottom: 8px;
+	color: #374151;
+}
+
+/* Chart card */
+.chart-wrap {
+	background: linear-gradient(180deg, #ffffff, #fbfdff);
+	border-radius: 12px;
+	padding: 12px;
+	box-shadow: 0 8px 20px rgba(2,6,23,0.04);
+	width: 100%;
+	/* Use aspect-ratio to provide a stable height for Chart.js when maintainAspectRatio=false */
+	aspect-ratio: var(--chart-aspect);
+	min-height: 200px; /* fallback minimum */
+	position: relative;
+}
+
+/* Fixed chart wrapper variant for dashboard where we want a stable height
+   to avoid Chart.js resize loops on some browsers. */
+.chart-wrap.chart-fixed {
+	aspect-ratio: auto; /* disable aspect-ratio for fixed variant */
+	height: 420px; /* stable height to avoid continuous resize triggers */
+	min-height: 320px;
+}
+
+/* Canvas sizing and smooth transition */
+.chart-wrap canvas {
+	width: 100% !important;
+	height: 100% !important;
+	display: block;
+	/* Avoid transitioning width/height — Chart.js triggers resize events when canvas size changes,
+	   and animating those properties can cause an infinite resize loop. Use opacity transitions
+	   (or none) instead for safe, non-layout animations. */
+	transition: opacity var(--chart-transition);
+}
+
+/* Predict page top layout: form + chart. Stack on small screens */
+.predict-top {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.predict-top .card {
+	flex: 0 0 var(--card-width);
+	max-width: var(--card-width);
+}
+
+.predict-top .chart-wrap {
+  flex: 1 1 0;
+}
+
+/* Dashboard insights table: make value column shrink to content */
+.insights-table {
+	width: auto; /* shrink to content instead of filling container */
+	max-width: 100%;
+	border-collapse: collapse;
+}
+.insights-table th, .insights-table td {
+	padding: 8px 10px;
+	border-bottom: 1px solid #eee;
+}
+.insights-table th:nth-child(2), .insights-table td:nth-child(2) {
+	white-space: nowrap;
+	width: 1%; /* shrink-to-fit */
+	text-align: right;
+}
+.insights-table th:nth-child(2), .insights-table td:nth-child(2) {
+	/* Use tabular numbers so digits align vertically (better than switching to monospace) */
+	font-variant-numeric: tabular-nums;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+}
+.insights-table th:nth-child(1), .insights-table td:nth-child(1) {
+	text-align: left;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+	.form-grid { grid-template-columns: 1fr; }
+	.chart-wrap { margin-top: 12px; }
+
+	/* Stack the predict page layout vertically on small screens */
+	.predict-top { flex-direction: column; }
+	.predict-top .card { max-width: 100%; }
+	.predict-top .chart-wrap { width: 100%; }
+
+	/* Mobile: controls go full width */
+	.form-grid .field > input[type="number"],
+	.form-grid .field > select { max-width: 100%; }
+
+	/* Dashboard: move chart below the insights table on mobile */
+	.dashboard-row { flex-direction: column; align-items: stretch; }
+	.dashboard-left { order: 1; }
+	.dashboard-right { order: 2; margin-top: 16px; }
+}
+

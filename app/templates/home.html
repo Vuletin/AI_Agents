@@ -11,12 +11,12 @@
   </select>
 </form>
 
-<div style="display:flex; gap:40px; align-items:flex-start; justify-content:center;">
+<div class="dashboard-row" style="display:flex; gap:40px; align-items:flex-start; justify-content:center;">
     <!-- Left: Feature Importance / Coefficients -->
-    <div style="flex:1; min-width:300px;">
+    <div class="dashboard-left" style="flex: 0 0 560px; max-width: 560px; min-width:300px;">
         <h2>{{ model_name|capitalize }} Insights</h2>
         {% if insights %}
-        <table>
+        <table class="insights-table">
             <thead>
                 <tr>
                     <th>Feature</th>
@@ -38,7 +38,7 @@
     </div>
 
     <!-- Right: Feature breakdown chart -->
-    <div style="width:800px; margin:20px auto;">
+    <div class="dashboard-right" style="margin:20px auto;">
         <div style="text-align:center; margin:20px;">
             <h2>Churn by Category</h2>
             <label for="featureSelect"><strong>Select a feature:</strong></label>
@@ -48,7 +48,9 @@
                 {% endfor %}
             </select>
         </div>
-    <canvas id="churnChart" style="width:100%; height:400px;"></canvas>
+    <div class="chart-wrap chart-fixed">
+        <canvas id="churnChart"></canvas>
+    </div>
     </div>
 </div>
 
@@ -64,6 +66,10 @@
     let initialFeature = featureSelect && featureSelect.value ? featureSelect.value : (availableFeatures.length ? availableFeatures[0] : null);
 
     if (initialFeature && chartsData[initialFeature] && ctx) {
+        // destroy any previous chart instance on the canvas to avoid duplicates
+        if (ctxEl.__chartInstance) {
+            try { ctxEl.__chartInstance.destroy(); } catch (e) { /* ignore */ }
+        }
         let chart = new Chart(ctx, {
             type: chartsData[initialFeature].type,
             data: {
@@ -78,6 +84,7 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } }
             }
         });
@@ -89,8 +96,12 @@
                 chart.config.type = chartsData[selected].type;
                 chart.data.labels = chartsData[selected].labels;
                 chart.data.datasets[0].data = chartsData[selected].values;
-                chart.update();
+        chart.update();
+        // save the instance for later cleanup
+        ctxEl.__chartInstance = chart;
             });
+    // save initial instance
+    ctxEl.__chartInstance = chart;
         }
     } else {
         console.warn('No chartsData available or canvas/context missing', { initialFeature, availableFeatures, ctxExists: !!ctx });
