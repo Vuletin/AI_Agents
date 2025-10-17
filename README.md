@@ -1,119 +1,148 @@
-## Churn Agent
+<div align="center">
 
-## 🧠 Churn Predict – Customer Churn Prediction Web App
+# 🧠 Churn Predict  
+### Customer Churn Prediction Web App  
 
-Churn Predict is a full-featured machine learning web application built with Flask for predicting customer churn based on demographic and service data.
-It provides a clean dashboard for visualizing churn trends, managing users, and testing different prediction models in real time.
+🎯 *Predict which customers are likely to leave — powered by Logistic Regression and Random Forest models.*
 
-## 🚀 Features
-## 🧩 Core Functionality
+![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
+![Flask](https://img.shields.io/badge/Flask-Backend-lightgrey?logo=flask)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange?logo=scikit-learn)
+![Status](https://img.shields.io/badge/status-Active-success)
 
-User Input Form – enter customer details (gender, tenure, contract type, monthly charges, etc.) and instantly get churn prediction.
+</div>
 
-Random User Generator – automatically fill the form with randomized customer data for quick testing.
+---
 
-Machine Learning Models – supports multiple trained models (Random Forest, Logistic Regression, etc.) with probability outputs.
+## 🚀 Overview
 
-Detailed Prediction Output – shows churn probability and predicted outcome.
+**Churn Predict** is a machine learning web application that analyzes customer data and predicts churn probability in real time.  
+It combines two powerful models — **Logistic Regression** and **Random Forest** — optimized and tuned for balanced accuracy and interpretability.  
 
-## 📊 Dashboard & Visualization
+The app is designed to help telecom and subscription-based businesses **identify customers at risk of leaving** and make data-driven retention decisions.
 
-Interactive Charts – visual breakdown of churn by contract, payment method, internet service, and more.
+---
 
-Dynamic Table – view all predictions made during the session with sortable, zebra-styled, hover-highlighted rows.
+## 🧩 Key Features
 
-Data Insights – real churn statistics computed directly from the original dataset.
+- **Real-Time Prediction** — enter customer info and instantly get churn probability from both models.  
+- **Dual-Model Comparison** — view how Logistic Regression and Random Forest differ in decision behavior.  
+- **Dynamic Dashboard** — visualize churn by categories like contract, payment type, and internet service.  
+- **Sortable Data Table** — neatly styled with zebra rows, hover highlights, and rounded corners.  
+- **Random Data Generator** — quickly test model behavior with randomized user samples.  
 
-## 🧰 Data & Backend
+---
 
-Clean Data Pipeline – automatic normalization of categorical/numerical inputs for consistent predictions.
+## 🤖 Machine Learning Details
 
-Reusable ML Pipeline – trained models are saved and loaded via joblib for fast inference.
+Both models were trained on **7,000 users from the [Telco Customer Churn dataset](https://www.kaggle.com/blastchar/telco-customer-churn)** on Kaggle.
 
-Logging & Debugging Tools – print logs of model scores and inputs for transparency.
+| Model | Strength | Description |
+|--------|-----------|--------------|
+| **Logistic Regression** | 🧮 Interpretability | Provides transparent probability estimates useful for understanding feature influence. |
+| **Random Forest** | 🌲 Accuracy & Stability | Handles non-linear relationships and feature interactions to improve predictive power. |
 
-## 🧪 Tech Stack
-Layer	Technologies
-Backend	Flask, scikit-learn, pandas, joblib
-Frontend	HTML, CSS, Bootstrap, Chart.js
-Data	CSV dataset (WA_Fn-UseC_-Telco-Customer-Churn.csv)
-Deployment	Localhost (Flask), easily adaptable to Render / Railway / Heroku
+During optimization, I tuned hyperparameters, applied feature encoding & scaling, and compared ROC-AUC and F1-scores to ensure both models perform robustly on unseen data.
+
+---
+
+## 🧰 Tech Stack
+
+| Layer | Technologies |
+|-------|---------------|
+| **Backend** | Flask, scikit-learn, pandas, joblib |
+| **Frontend** | HTML, CSS, Chart.js |
+| **Data** | 7,000 Telco Customer records (Kaggle) |
+| **Deployment** | Flask (local or Render) |
+
+---
+
 ## 🧭 Folder Structure
+
 AI_Agents/
-│
-├── app/
-│   ├── routes/
-│   │   └── churn_routes.py
-│   ├── static/
-│   │   ├── css/
-│   │   └── js/
-│   ├── templates/
-│   │   ├── dashboard.html
-│   │   └── predict.html
-│   └── __init__.py
-│
-├── models/
-│   ├── random_forest_model.pkl
-│   ├── logistic_regression_model.pkl
-│   └── scaler.pkl
-│
-├── data/
-│   └── WA_Fn-UseC_-Telco-Customer-Churn.csv
-│
-├── main.py
+├── app
+│   ├── agents
+│   │   ├── automation_agent.py
+│   │   ├── churn_agent.py
+│   │   ├── __init__.py
+│   │   └── sentiment_agent.py
+│   ├── constants.py
+│   ├── data
+│   │   └── WA_Fn-UseC_-Telco-Customer-Churn.csv
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models
+│   │   ├── churn_model.pkl
+│   │   ├── logistic_regression.pkl
+│   │   └── random_forest.pkl
+│   ├── routes
+│   │   ├── churn_routes.py
+│   │   └── __init__.py
+│   ├── static
+│   │   ├── favicon.ico
+│   │   └── styles.css
+│   └── templates
+│       ├── base.html
+│       ├── dashboard.html
+│       ├── home.html
+│       ├── login.html
+│       ├── predict.html
+│       └── upload.html
+├── Dockerfile
+├── __init__.py
+├── README.md
 └── requirements.txt
 
-🧑‍💻 How to Run Locally
+## ⚙️ How to Run Locally
 
-Clone the repository
-
+```bash
+# Clone the repository
 git clone https://github.com/yourusername/churn-predict.git
 cd churn-predict
 
-
-Create virtual environment
-
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate   # (Linux/Mac)
-venv\Scripts\activate      # (Windows)
+source venv/bin/activate      # (Linux/Mac)
+venv\Scripts\activate         # (Windows)
 
-
-Install dependencies
-
+# Install dependencies
 pip install -r requirements.txt
 
-
-Run the app
-
+# Run the app
 python main.py
+Then open:
+👉 http://127.0.0.1:5000
 
+🧭 Roadmap
 
-Open in browser
+ Logistic Regression & Random Forest Models
 
-http://127.0.0.1:5000
+ Interactive Dashboard with Charts
 
-📈 Future Roadmap
+ Random User Generator
 
-✅ Current: Fully functional churn prediction and analytics dashboard
-🧩 Planned:
+ Export table & charts to CSV
 
-Export chart & prediction table to CSV
+ Upload custom CSV for batch predictions
 
-Upload custom CSV dataset for batch prediction
-
-Build a general ML prediction app where users can:
+ Evolve into a General ML Prediction App where users can:
 
 Upload any dataset
 
 Automatically train a model
 
-Use a “Predict” page to test new samples
+Test predictions on new samples
 
-📷 Screenshots (Optional)
+📸 Screenshots
 
-(Add images of dashboard, form, and chart views here)
+(Coming soon — dashboard and prediction view)
 
+<div align="center">
 🧾 License
 
-This project is open source and available under the MIT License
-.
+Released under the MIT License
+
+💡 Built with Python, Flask, and a lot of curiosity about machine learning.
+
+</div> ```
+
