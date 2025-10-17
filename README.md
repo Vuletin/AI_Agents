@@ -58,7 +58,7 @@ During optimization, I tuned hyperparameters, applied feature encoding & scaling
 ---
 
 ## 🧭 Folder Structure
-
+```text
 AI_Agents/
 ├── app
 │   ├── agents
@@ -92,57 +92,64 @@ AI_Agents/
 ├── __init__.py
 ├── README.md
 └── requirements.txt
+```
 
 ## ⚙️ How to Run Locally
 
-```bash
-# Clone the repository
+### 1️⃣ Clone the repository
 git clone https://github.com/yourusername/churn-predict.git
 cd churn-predict
 
-# Create virtual environment
 python -m venv venv
 source venv/bin/activate      # (Linux/Mac)
 venv\Scripts\activate         # (Windows)
 
-# Install dependencies
 pip install -r requirements.txt
 
-# Run the app
 python main.py
-Then open:
+
+Then open in your browser:
 👉 http://127.0.0.1:5000
 
-🧭 Roadmap
+---
 
- Logistic Regression & Random Forest Models
+## 🧭 Roadmap
 
- Interactive Dashboard with Charts
+- [x] Logistic Regression & Random Forest Models  
+- [x] Interactive Dashboard with Charts  
+- [x] Random User Generator  
+- [ ] Export table & charts to **CSV**  
+- [ ] Upload custom CSV for **batch predictions**  
+- [ ] Evolve into a **General ML Prediction App**, where users can:  
+  - Upload any dataset  
+  - Automatically train a model  
+  - Test predictions on new samples
 
- Random User Generator
-
- Export table & charts to CSV
-
- Upload custom CSV for batch predictions
-
- Evolve into a General ML Prediction App where users can:
-
-Upload any dataset
-
-Automatically train a model
-
-Test predictions on new samples
-
-📸 Screenshots
-
-(Coming soon — dashboard and prediction view)
+## 📸 Screenshots
+*(Coming soon — dashboard and prediction view)*
 
 <div align="center">
-🧾 License
 
-Released under the MIT License
+## 🧑‍💻 About the Author
 
-💡 Built with Python, Flask, and a lot of curiosity about machine learning.
+**Sava** is a self-taught developer with a lifelong passion for computers and technology.  
+He has been programming for about a year, focusing on **full-stack development** and **AI applications**.  
+Despite being early in his career, he has already built **senior-level projects**, including:
 
-</div> ```
+- 🏦 A **Finance/Banking App** built with Flask and SQLite  
+- 🧠 **Churn Predict**, a machine learning app using Random Forest & Logistic Regression  
+- 🤖 **AI_Agents**, a growing suite of AI tools including:
+  - **Churn Predict**
+  - **Sentiment Analysis**
+  - **Automation Agent**
+
+He plans to **dockerize and deploy** all AI_Agents on **Google Cloud**, creating a unified AI platform.  
+Sava is also exploring **Linux systems**, **low-level programming in C**, and **Python-based AI** integrated with **camera apps** and **LLMs**.
+
+## 🧾 License
+
+Released under the [MIT License](LICENSE)
+
+💡 Built with **Flask**, **scikit-learn**, and a lifelong curiosity for **machine learning**.
+
 
