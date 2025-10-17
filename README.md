@@ -148,9 +148,10 @@ Sava is also exploring **Linux systems**, **low-level programming in C**, and **
 
 ## 🧾 License
 
-Released under the [MIT License](LICENSE)
+Released under the [MIT License](**LICENSE**)
 
 💡 Built with **Flask**, **scikit-learn**, and a lifelong curiosity for **machine learning**.
+
 
 
 
