@@ -133,8 +133,8 @@ Then open in your browser:
 ## 🧑‍💻 About the Author
 
 **Sava** is a self-taught developer with a lifelong passion for computers and technology.  
-He has been programming for about a year, focusing on **full-stack development** and **AI applications**.  
-Despite being early in his career, he has already built **senior-level projects**, including:
+Focusing on **full-stack development** and **AI applications**.  
+He has already built **senior-level projects**, including:
 
 - 🏦 A **Finance/Banking App** built with Flask and SQLite  
 - 🧠 **Churn Predict**, a machine learning app using Random Forest & Logistic Regression  
@@ -151,5 +151,6 @@ Sava is also exploring **Linux systems**, **low-level programming in C**, and **
 Released under the [MIT License](LICENSE)
 
 💡 Built with **Flask**, **scikit-learn**, and a lifelong curiosity for **machine learning**.
+
 
 
