@@ -14,6 +14,16 @@
 
 ---
 
+## 🌐 Live Demo
+
+* **Test the app yourself::** [vuletin.github.io/weather-app](https://vuletin.github.io/weather-app](https://churn-predict-201952810935.europe-central2.run.app)
+* Deployment & CI
+
+This project is continuously integrated with **Google Cloud Build**.  
+Each push to the `main` branch automatically triggers a build that packages the app into a Docker container and prepares it for deployment on **Google Cloud Run**.
+
+---
+
 ## 🚀 Overview
 
 **Churn Predict** is a machine learning web application that analyzes customer data and predicts churn probability in real time.  
@@ -151,6 +161,7 @@ Sava is also exploring **Linux systems**, **low-level programming in C**, and **
 Released under the [MIT License](**LICENSE**)
 
 💡 Built with **Flask**, **scikit-learn**, and a lifelong curiosity for **machine learning**.
+
 
 
 
