@@ -16,11 +16,7 @@
 
 ## 🌐 Live Demo
 
-* **Test the app yourself::** [vuletin.github.io/weather-app](https://vuletin.github.io/weather-app](https://churn-predict-201952810935.europe-central2.run.app)
-* Deployment & CI
-
-This project is continuously integrated with **Google Cloud Build**.  
-Each push to the `main` branch automatically triggers a build that packages the app into a Docker container and prepares it for deployment on **Google Cloud Run**.
+* **Test the app yourself::** (https://churn-predict-201952810935.europe-central2.run.app)
 
 ---
 
@@ -136,7 +132,11 @@ Then open in your browser:
   - Test predictions on new samples
 
 ## 📸 Screenshots
-*(Coming soon — dashboard and prediction view)*
+<img width="1864" height="835" alt="screenshot-2025-10-20_19-03-58" src="https://github.com/user-attachments/assets/41315183-e0fb-4dbe-ba35-a8c4940b0b2b" />
+<img width="1845" height="877" alt="screenshot-2025-10-20_19-03-37" src="https://github.com/user-attachments/assets/5a17eb93-8640-441d-ad4b-02def5c553f8" />
+<img width="1857" height="873" alt="screenshot-2025-10-20_19-02-06" src="https://github.com/user-attachments/assets/a8543e10-9a98-42ec-ade5-bd13fc7708c7" />
+<img width="1866" height="868" alt="screenshot-2025-10-20_18-59-50" src="https://github.com/user-attachments/assets/56cc35b0-0fde-452b-a2f1-d3be65d65904" />
+
 
 <div align="center">
 
@@ -158,11 +158,12 @@ Sava is also exploring **Linux systems**, **low-level programming in C**, and **
 
 ## 🧾 License
 
-Released under the [MIT License](**LICENSE**)
+Released under the [MIT License]([**LICENSE**](https://github.com/savapetrovic/AI_Agents/blob/main/LICENSE
+)
 
 💡 Built with **Flask**, **scikit-learn**, and a lifelong curiosity for **machine learning**.
 
+## Deployment & CI
 
-
-
-
+This project is continuously integrated with **Google Cloud Build**.  
+Each push to the `main` branch automatically triggers a build that packages the app into a Docker container and prepares it for deployment on **Google Cloud Run**.
