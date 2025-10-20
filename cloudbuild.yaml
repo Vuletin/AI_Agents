@@ -1,0 +1,14 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/churn-predict:$COMMIT_SHA', '.']
+
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
+  args:
+    [
+      'run', 'deploy', 'churn-predict',
+      '--image', 'gcr.io/$PROJECT_ID/churn-predict:$COMMIT_SHA',
+      '--platform', 'managed',
+      '--region', 'europe-central2',
+      '--allow-unauthenticated'
+    ]

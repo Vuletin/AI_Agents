@@ -1,20 +1,21 @@
-# Use an official Python image
-FROM python:3.11-slim
+# Use a minimal Python base image
+FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first (for layer caching)
+# Copy dependency file and install
 COPY requirements.txt .
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copy all project files
 COPY . .
 
-# Expose port 8080 (Cloud Run expects this)
-ENV PORT=8080
+# Set PYTHONPATH so Flask can find your 'app' package
+ENV PYTHONPATH=/app
 
-# Run Flask app
+# Expose port (Cloud Run expects 8080)
+EXPOSE 8080
+
+# Start Flask app
 CMD ["python", "app/main.py"]
