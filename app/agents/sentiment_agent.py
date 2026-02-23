@@ -11,14 +11,20 @@ sentiment_bp = Blueprint("sentiment", __name__)
 # Lazy-loaded model cache
 sentiment_model = None
 model_load_error = None
+model_load_attempted = False
 
 
 def get_sentiment_model():
     """Load and cache the sentiment model the first time it is needed."""
-    global sentiment_model, model_load_error
+    global sentiment_model, model_load_error, model_load_attempted
 
     if sentiment_model is not None:
         return sentiment_model
+
+    if model_load_attempted:
+        return None
+
+    model_load_attempted = True
 
     if pipeline is None:
         model_load_error = "transformers is not available in this environment"
