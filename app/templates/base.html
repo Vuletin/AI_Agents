@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Churn App</title>
+        <title>AI Agents</title>
         <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             h1, h2 { text-align: center; }
@@ -29,9 +29,12 @@
     </head>
     <body>
         <header>
-            <h1>Churn Prediction App</h1>
+            <h1>AI Agents</h1>
             <nav>
-                <a href="/">Home</a> | <a href="/predict">Predict</a>
+                <a href="{{ url_for('main.home') }}">Home</a> |
+                <a href="{{ url_for('churn_bp.home') }}">Churn</a> |
+                <a href="{{ url_for('churn_bp.predict') }}">Churn Predict</a> |
+                <a href="{{ url_for('sentiment_ui.sentiment_ui') }}">Sentiment</a>
             </nav>
         </header>
         <hr>

@@ -3,7 +3,7 @@
 <h2>Dashboard</h2>
 <p style="text-align:center;">What the model learned + churn breakdown</p>
 
-<form method="get" action="/">
+<form method="get" action="{{ url_for('churn_bp.home') }}">
   <label for="model">Choose model:</label>
   <select name="model" id="model" onchange="this.form.submit()">
     <option value="random_forest" {% if model_name == "random_forest" %}selected{% endif %}>Random Forest</option>

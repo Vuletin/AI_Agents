@@ -21,10 +21,15 @@ def get_sentiment_model():
     if sentiment_model is not None:
         return sentiment_model
 
-    if model_load_attempted:
+    if model_load_attempted and pipeline is None:
         return None
 
+    if model_load_attempted and pipeline is not None:
+        # Allow a retry if dependencies were installed after a failed attempt.
+        model_load_attempted = False
+
     model_load_attempted = True
+    model_load_error = None
 
     if pipeline is None:
         model_load_error = "transformers is not available in this environment"

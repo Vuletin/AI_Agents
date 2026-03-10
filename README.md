@@ -1,9 +1,9 @@
 <div align="center">
 
-# 🧠 Churn Predict  
-### Customer Churn Prediction Web App  
+# 🧠 AI Agents  
+### Churn Prediction + Sentiment Analysis  
 
-🎯 *Predict which customers are likely to leave — powered by Logistic Regression and Random Forest models.*
+🎯 *Predict churn and analyze sentiment with a simple multi-agent Flask app.*
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
 ![Flask](https://img.shields.io/badge/Flask-Backend-lightgrey?logo=flask)
@@ -22,7 +22,9 @@
 
 ## 🚀 Overview
 
-**Churn Predict** is a machine learning web application that analyzes customer data and predicts churn probability in real time.  
+**AI Agents** is a machine learning web application that offers two agents:
+- **Churn Agent** — analyzes customer data and predicts churn probability in real time.  
+- **Sentiment Agent** — analyzes text sentiment using a Transformer model.  
 It combines two powerful models — **Logistic Regression** and **Random Forest** — optimized and tuned for balanced accuracy and interpretability.  
 
 The app is designed to help telecom and subscription-based businesses **identify customers at risk of leaving** and make data-driven retention decisions.
@@ -36,6 +38,7 @@ The app is designed to help telecom and subscription-based businesses **identify
 - **Dynamic Dashboard** — visualize churn by categories like contract, payment type, and internet service.  
 - **Sortable Data Table** — neatly styled with zebra rows, hover highlights, and rounded corners.  
 - **Random Data Generator** — quickly test model behavior with randomized user samples.  
+- **Sentiment Analysis UI** — analyze text sentiment in the browser.  
 
 ---
 
@@ -56,7 +59,7 @@ During optimization, I tuned hyperparameters, applied feature encoding & scaling
 
 | Layer | Technologies |
 |-------|---------------|
-| **Backend** | Flask, scikit-learn, pandas, joblib |
+| **Backend** | Flask, scikit-learn, pandas, joblib, transformers, torch |
 | **Frontend** | HTML, CSS, Chart.js |
 | **Data** | 7,000 Telco Customer records (Kaggle) |
 | **Deployment** | Flask (local or Render) |
@@ -83,17 +86,18 @@ AI_Agents/
 │   │   └── random_forest.pkl
 │   ├── routes
 │   │   ├── churn_routes.py
+│   │   ├── main_routes.py
+│   │   ├── sentiment_routes.py
 │   │   └── __init__.py
 │   ├── static
 │   │   ├── favicon.ico
 │   │   └── styles.css
 │   └── templates
 │       ├── base.html
-│       ├── dashboard.html
 │       ├── home.html
-│       ├── login.html
+│       ├── landing.html
 │       ├── predict.html
-│       └── upload.html
+│       └── sentiment.html
 ├── Dockerfile
 ├── __init__.py
 ├── README.md
@@ -112,10 +116,10 @@ venv\Scripts\activate         # (Windows)
 
 pip install -r requirements.txt
 
-python main.py
+python -m app.main
 
 Then open in your browser:
-👉 http://127.0.0.1:5000
+👉 http://127.0.0.1:8080
 
 ---
 

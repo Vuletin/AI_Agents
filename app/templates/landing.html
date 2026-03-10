@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<section style="max-width: 900px; margin: 40px auto; text-align:center;">
+    <h2>Choose an agent</h2>
+    <p>Select which agent you want to explore.</p>
+    <div style="display:flex; gap:24px; flex-wrap:wrap; justify-content:center; margin-top:30px;">
+        <div style="flex:1 1 300px; max-width:360px; border:1px solid #ddd; border-radius:8px; padding:20px;">
+            <h3>Churn Agent</h3>
+            <p>Explore churn insights and run predictions.</p>
+            <p>
+                <a href="{{ url_for('churn_bp.home') }}">Open Dashboard</a>
+                |
+                <a href="{{ url_for('churn_bp.predict') }}">Predict</a>
+            </p>
+        </div>
+        <div style="flex:1 1 300px; max-width:360px; border:1px solid #ddd; border-radius:8px; padding:20px;">
+            <h3>Sentiment Agent</h3>
+            <p>Analyze text sentiment in the browser.</p>
+            <p>
+                <a href="{{ url_for('sentiment_ui.sentiment_ui') }}">Open Sentiment</a>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

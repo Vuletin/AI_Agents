@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section style="max-width: 900px; margin: 40px auto;">
+    <h2>Sentiment Analysis</h2>
+    <p style="text-align:center;">Paste text to analyze sentiment.</p>
+
+    <form method="post" action="{{ url_for('sentiment_ui.sentiment_ui') }}" style="margin-top:20px;">
+        <textarea name="text" rows="6" style="width:100%; padding:10px;" placeholder="Type or paste text here...">{{ text }}</textarea>
+        <div style="text-align:center; margin-top:12px;">
+            <button type="submit">Analyze</button>
+        </div>
+    </form>
+
+    {% if error %}
+        <p style="color:#b00020; text-align:center; margin-top:16px;">{{ error }}</p>
+    {% endif %}
+
+    {% if sentiment %}
+        <div style="text-align:center; margin-top:20px;">
+            <h3>Result</h3>
+            <p><strong>Sentiment:</strong> {{ sentiment }}</p>
+            <p><strong>Confidence:</strong> {{ confidence }}</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
